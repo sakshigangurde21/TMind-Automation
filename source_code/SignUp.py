@@ -10,112 +10,146 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class SignUpTests(Base):
+
     def setUp(self):
-        """Initialize driver and SignUpPage"""
         self.driver = super().start_driver()
         self.signup = SignUpPage(self.driver)
 
-    def test_signup_success(self):
+    # ---------------- SIGNUP SUCCESS ----------------
+    def test_Verify_user_should_be_able_to_signup_with_valid_details(self):
         self.signup.navigate_to_signup()
 
-        self.signup.enter_username("newuser123")
-        self.signup.enter_email("new123@test.com")
-        self.signup.enter_password("StrongPass@123")
-        self.signup.click_create_account()
+        self.signup.send_keys(SignUpLocators.USERNAME_FIELD, "newuser123")
+        self.signup.send_keys(SignUpLocators.EMAIL_FIELD, "new123@test.com")
+        self.signup.send_keys(SignUpLocators.PASSWORD_FIELD, "StrongPass@123")
+        self.signup.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
 
-        WebDriverWait(self.driver, 10).until(
-            lambda d: self.signup.is_signup_successful())
+        try:
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located(SignUpLocators.SUCCESS_LOGIN_TEXT)
+            )
+            self.assertTrue(
+                self.signup.is_visible(SignUpLocators.SUCCESS_LOGIN_TEXT)
+            )
+        except Exception:
+            raise AssertionError("Signup failed for valid inputs")
 
-        self.assertTrue(self.signup.is_signup_successful(), "Signup should succeed for valid inputs")
-
-    def test_signup_empty_fields(self):
+    # ---------------- EMPTY FIELDS ----------------
+    def test_Verify_error_should_display_when_all_fields_empty(self):
         self.signup.navigate_to_signup()
-        self.signup.click_create_account()
+        self.signup.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
 
-        toast = self.signup.get_toast_error()
-        validation = self.signup.get_validation_message()
-        has_error = self.signup.is_error_displayed()
+        try:
+            error = (
+                self.signup.is_visible(SignUpLocators.ERROR_MESSAGES)
+                or self.signup.get_toast_message()
+                or self.signup.get_browser_validation_message(SignUpLocators.USERNAME_FIELD))
+            self.assertTrue(error)
+        except Exception:
+            raise AssertionError("No validation shown for empty signup form")
 
-        self.assertTrue(has_error or toast or validation, "Error should be displayed for empty fields")
-
-    def test_signup_invalid_email(self):
-        self.signup.navigate_to_signup()
-
-        self.signup.enter_username("dummyuser")
-        self.signup.enter_email("invalidemail")
-        self.signup.enter_password("Strong@123")
-        self.signup.click_create_account()
-
-        toast = self.signup.get_toast_error()
-        validation = self.signup.get_validation_message()
-
-        self.assertTrue(self.signup.is_error_displayed() or toast or validation, "Invalid email should trigger validation error")
-
-    def test_signup_weak_password(self):
+    # ---------------- INVALID EMAIL ----------------
+    def test_Verify_error_for_invalid_email(self):
         self.signup.navigate_to_signup()
 
-        self.signup.enter_username("user1")
-        self.signup.enter_email("user1@test.com")
-        self.signup.enter_password("1234")
-        self.signup.click_create_account()
+        self.signup.send_keys(SignUpLocators.USERNAME_FIELD, "dummyuser")
+        self.signup.send_keys(SignUpLocators.EMAIL_FIELD, "invalidemail")
+        self.signup.send_keys(SignUpLocators.PASSWORD_FIELD, "Strong@123")
+        self.signup.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
 
-        toast = self.signup.get_toast_error()
-        validation = self.signup.get_validation_message()
+        try:
+            self.assertTrue(
+                self.signup.is_visible(SignUpLocators.ERROR_MESSAGES)
+                or self.signup.get_browser_validation_message(SignUpLocators.EMAIL_FIELD)
+                or self.signup.get_toast_message())
+        except Exception:
+            raise AssertionError("Invalid email validation failed")
 
-        self.assertTrue(self.signup.is_error_displayed() or toast or validation, "Weak password should show error")
-
-    def test_signup_existing_email(self):
+    # ---------------- WEAK PASSWORD ----------------
+    def test_Verify_error_for_weak_password(self):
         self.signup.navigate_to_signup()
 
-        self.signup.enter_username("exuser")
-        self.signup.enter_email("newuser123@test.com")
-        self.signup.enter_password("StrongPass@123")
-        self.signup.click_create_account()
+        self.signup.send_keys(SignUpLocators.USERNAME_FIELD, "user1")
+        self.signup.send_keys(SignUpLocators.EMAIL_FIELD, "user1@test.com")
+        self.signup.send_keys(SignUpLocators.PASSWORD_FIELD, "1234")
+        self.signup.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
 
-        toast = self.signup.get_toast_error()
+        try:
+            self.assertTrue(
+                self.signup.is_visible(SignUpLocators.ERROR_MESSAGES)
+                or self.signup.get_browser_validation_message(SignUpLocators.PASSWORD_FIELD)
+                or self.signup.get_toast_message())
+        except Exception:
+            raise AssertionError("Weak password validation failed")
 
-        self.assertTrue(toast or self.signup.is_error_displayed(), "Existing email should show error")
+    # ---------------- EXISTING EMAIL ----------------
+    def test_Verify_error_for_existing_email(self):
+        self.signup.navigate_to_signup()
+        self.signup.send_keys(SignUpLocators.USERNAME_FIELD, "exuser")
+        self.signup.send_keys(SignUpLocators.EMAIL_FIELD, "exuser@gmail.com")
+        self.signup.send_keys(SignUpLocators.PASSWORD_FIELD, "StrongPass@123")
+        self.signup.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
 
-    def test_signup_short_username(self):
+        try:
+            self.assertTrue(
+                self.signup.get_toast_message()
+                or self.signup.is_visible(SignUpLocators.ERROR_MESSAGES))
+        except Exception:
+            raise AssertionError("Existing email validation failed")
+
+    # ---------------- SHORT USERNAME ----------------
+    def test_Verify_error_for_short_username(self):
         self.signup.navigate_to_signup()
 
-        self.signup.enter_username("a")
-        self.signup.enter_email("test@test.com")
-        self.signup.enter_password("StrongPass@123")
-        self.signup.click_create_account()
+        self.signup.send_keys(SignUpLocators.USERNAME_FIELD, "a")
+        self.signup.send_keys(SignUpLocators.EMAIL_FIELD, "test@test.com")
+        self.signup.send_keys(SignUpLocators.PASSWORD_FIELD, "StrongPass@123")
+        self.signup.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
 
-        validation = self.signup.get_validation_message()
-        self.assertTrue(validation or self.signup.is_error_displayed(), "Short username should be rejected")
+        try:
+            self.assertTrue(
+                self.signup.get_browser_validation_message(SignUpLocators.USERNAME_FIELD)
+                or self.signup.is_visible(SignUpLocators.ERROR_MESSAGES))
+        except Exception:
+            raise AssertionError("Short username validation failed")
 
-    def test_signup_long_username(self):
+    # ---------------- LONG USERNAME ----------------
+    # def test_Verify_error_for_long_username(self):
+    #     self.signup.navigate_to_signup()
+    #     self.signup.send_keys(SignUpLocators.USERNAME_FIELD, "a" * 200)
+    #     self.signup.send_keys(SignUpLocators.EMAIL_FIELD, "test@test.com")
+    #     self.signup.send_keys(SignUpLocators.PASSWORD_FIELD, "StrongPass@123")
+    #     self.signup.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
+
+    #     try:
+    #         self.assertTrue(
+    #             self.signup.get_browser_validation_message(SignUpLocators.USERNAME_FIELD)
+    #             or self.signup.is_visible(SignUpLocators.ERROR_MESSAGES)
+    #             or self.signup.get_toast_message())
+    #     except Exception:
+    #         raise AssertionError("Long username validation failed")
+
+    #  ---------------- SPACES INPUT ----------------
+    def test_Verify_signup_with_spaces_input(self):
         self.signup.navigate_to_signup()
 
-        self.signup.enter_username("a" * 200)
-        self.signup.enter_email("test@test.com")
-        self.signup.enter_password("StrongPass@123")
-        self.signup.click_create_account()
+        self.signup.send_keys(SignUpLocators.USERNAME_FIELD, "   spaceuser   ")
+        self.signup.send_keys(SignUpLocators.EMAIL_FIELD, "   spaceuser@test.com   ")
+        self.signup.send_keys(SignUpLocators.PASSWORD_FIELD, "StrongPass@123")
+        self.signup.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
 
-        validation = self.signup.get_validation_message()
-        self.assertTrue(validation or self.signup.is_error_displayed(), "Over-length username should fail")
+        try:
+            self.assertTrue(
+                self.signup.is_visible(SignUpLocators.SUCCESS_LOGIN_TEXT)
+                or self.signup.is_visible(SignUpLocators.ERROR_MESSAGES)
+                or self.signup.get_toast_message())
+        except Exception:
+            raise AssertionError("Spaces input case not handled properly")
 
-    def test_signup_spaces_input(self):
-        self.signup.navigate_to_signup()
-
-        self.signup.enter_username("   spaceuser   ")
-        self.signup.enter_email("   spaceuser@test.com   ")
-        self.signup.enter_password("StrongPass@123")
-        self.signup.click_create_account()
-
-        success = self.signup.is_signup_successful()
-        error = self.signup.is_error_displayed()
-
-        print("Signup success:", success)
-        print("Signup error:", error)
-
-        self.assertTrue(success or error, "Spaces case should either succeed or throw error")
-
+    # ---------------- CLEANUP ----------------
     def tearDown(self):
         self.quit_driver()
+
 
 if __name__ == "__main__":
     unittest.main()

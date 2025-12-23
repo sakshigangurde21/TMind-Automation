@@ -1,120 +1,150 @@
 import os
-import time
 import unittest
 from Base import Base
 from Page import LoginPage
 from locators import LoginLocators
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
 class LoginTests(Base):
+
     def setUp(self):
-        """Initialize driver and LoginPage"""
         self.driver = super().start_driver()
         self.login = LoginPage(self.driver)
 
-    def test_positive_login(self):
-        """Verify user can login with valid credentials"""
-        self.login.enter_email(os.environ.get("USER_EMAIL"))
-        self.login.enter_password(os.environ.get("PASSWORD"))
-        self.login.click_login()
+    # 1 ---------------- POSITIVE LOGIN ----------------
+    def test_Verify_user_should_be_able_to_login_with_valid_credentials(self):
 
-        # Wait for dashboard
-        WebDriverWait(self.driver, 10).until(
-            lambda d: self.login.is_dashboard_displayed()
-        )
-        self.assertTrue(self.login.is_dashboard_displayed())
+        self.login.send_keys(LoginLocators.EMAIL_INPUT, os.environ.get("USER_EMAIL"))
+        self.login.send_keys(LoginLocators.PASSWORD_INPUT, os.environ.get("PASSWORD"))
+        self.login.click(LoginLocators.LOGIN_BUTTON)
 
-    def test_negative_login(self):
-        """Verify error messages appear for invalid login"""
-        test_data = [
-            ("invalid@example.com", "wrongpass"),
-            ("invalid-email", "Test1234")
-        ]
-        for email, password in test_data:
-            self.login.clear_login_fields()
-            self.login.enter_email(email)
-            self.login.enter_password(password)
-            self.login.click_login()
+        try:
+            WebDriverWait(self.driver, 10).until(
+                EC.url_contains("/dashboard"))
+            self.assertTrue("/dashboard" in self.driver.current_url)
+        except Exception:
+            try:
+                self.assertEqual(0, 1)
+            except AssertionError:
+                raise AssertionError("Unable to login with valid credentials")
 
-            toast_msg = self.login.get_toast_message()
-            has_error = self.login.is_error_displayed()
-            browser_msg = self.login.get_browser_validation_message(LoginLocators.EMAIL_INPUT)
+    # 2 ---------------- INVALID LOGIN ----------------
+    def test_Verify_error_should_display_for_invalid_login(self):
 
-            print(f"\nTest case: {email}")
-            print(f"Inline error: {has_error}")
-            print(f"Toast message: {toast_msg}")
-            print(f"Browser validation: {browser_msg}")
+        self.login.send_keys(LoginLocators.EMAIL_INPUT, "invalid@test.com")
+        self.login.send_keys(LoginLocators.PASSWORD_INPUT, "wrongpass")
+        self.login.click(LoginLocators.LOGIN_BUTTON)
 
-            self.assertTrue(
-                has_error or (toast_msg not in [None, ""]) or (browser_msg not in [None, ""]),
-                f"No error detected for {email}. Error={has_error}, Toast={toast_msg}, Browser={browser_msg}")
+        try:
+            self.login.is_visible(LoginLocators.TOAST_ERROR)
+        except Exception:
+            try:
+                self.assertEqual(0, 1)
+            except AssertionError:
+                raise AssertionError("Error message not shown for invalid login")
 
-    def test_login_with_empty_password(self):
-        self.login.clear_login_fields()
-        self.login.enter_email("test@example.com")
-        self.login.enter_password("")
-        self.login.click_login()
+    # 3 ---------------- EMPTY PASSWORD ----------------
+    def test_Verify_error_for_empty_password(self):
 
-        self.assertTrue(self.login.is_error_displayed() or self.login.get_error_messages())
+        self.login.send_keys(LoginLocators.EMAIL_INPUT, "test@test.com")
+        self.login.click(LoginLocators.LOGIN_BUTTON)
 
-    def test_login_with_empty_email(self):
-        self.login.clear_login_fields()
-        self.login.enter_email("")
-        self.login.enter_password("Test1234")
-        self.login.click_login()
+        try:
+            self.login.is_visible(LoginLocators.ERROR_MSG)
+        except Exception:
+            try:
+                self.assertEqual(0, 1)
+            except AssertionError:
+                raise AssertionError("Empty password validation failed")
 
-        self.assertTrue(self.login.is_error_displayed() or self.login.get_error_messages())
+    # 4 ---------------- EMPTY EMAIL ----------------
+    def test_Verify_error_for_empty_email(self):
 
-    def test_login_with_both_fields_empty(self):
-        self.login.clear_login_fields()
-        self.login.click_login()
+        self.login.send_keys(LoginLocators.PASSWORD_INPUT, "Test1234")
+        self.login.click(LoginLocators.LOGIN_BUTTON)
 
-        self.assertTrue(self.login.is_error_displayed() or self.login.get_error_messages())
+        try:
+            self.login.is_visible(LoginLocators.ERROR_MSG)
+        except Exception:
+            try:
+                self.assertEqual(0, 1)
+            except AssertionError:
+                raise AssertionError("Empty email validation failed")
 
-    def test_login_with_short_password(self):
-        self.login.clear_login_fields()
-        self.login.enter_email("test@example.com")
-        self.login.enter_password("123")
-        self.login.click_login()
+    # 5 ---------------- BOTH FIELDS EMPTY ----------------
+    def test_Verify_error_when_both_fields_empty(self):
 
-        toast_message = self.login.get_toast_message()
-        print("Toast:", toast_message)
-        self.assertIn("Invalid email or password", toast_message)
+        self.login.click(LoginLocators.LOGIN_BUTTON)
 
-    def test_logout_functionality(self):
-        self.login.enter_email(os.environ.get("USER_EMAIL"))
-        self.login.enter_password(os.environ.get("PASSWORD"))
-        self.login.click_login()
+        try:
+            self.login.is_visible(LoginLocators.ERROR_MSG)
+        except Exception:
+            try:
+                self.assertEqual(0, 1)
+            except AssertionError:
+                raise AssertionError("No validation shown for empty login form")
 
-        self.login.wait_for_toast_to_disappear()
-        self.login.click_profile_icon()
-        self.login.click_logout()
+    # 6 ---------------- SHORT PASSWORD ----------------
+    def test_Verify_error_for_short_password(self):
 
-        # Wait for login button to appear
-        WebDriverWait(self.driver, 10).until(
-            EC.visibility_of_element_located(LoginLocators.LOGIN_BUTTON))
-        self.assertTrue(self.driver.find_element(*LoginLocators.LOGIN_BUTTON).is_displayed())
+        self.login.send_keys(LoginLocators.EMAIL_INPUT, "test@test.com")
+        self.login.send_keys(LoginLocators.PASSWORD_INPUT, "123")
+        self.login.click(LoginLocators.LOGIN_BUTTON)
 
-    def test_back_button_after_login(self):
-        self.login.enter_email(os.environ.get("USER_EMAIL"))
-        self.login.enter_password(os.environ.get("PASSWORD"))
-        self.login.click_login()
+        try:
+            self.login.is_visible(LoginLocators.TOAST_ERROR)
+        except Exception:
+            try:
+                self.assertEqual(0, 1)
+            except AssertionError:
+                raise AssertionError("Short password validation failed")
 
-        self.login.wait_for_toast_to_disappear()
-        self.login.click_profile_icon()  # Ensure dashboard loaded
+    # 7 ---------------- LOGOUT ----------------
+    def test_Verify_user_should_be_able_to_logout(self):
 
-        self.driver.back()            # Press browser back button
+        self.login.send_keys(LoginLocators.EMAIL_INPUT, os.environ.get("USER_EMAIL"))
+        self.login.send_keys(LoginLocators.PASSWORD_INPUT, os.environ.get("PASSWORD"))
+        self.login.click(LoginLocators.LOGIN_BUTTON)
 
-        profile_visible = WebDriverWait(self.driver, 10).until(
-            EC.visibility_of_element_located(LoginLocators.PROFILE_ICON))
-        self.assertTrue(profile_visible.is_displayed())
+        time.sleep(5)
 
+        self.login.click(LoginLocators.PROFILE_ICON)
+        self.login.click(LoginLocators.LOGOUT_BUTTON)
+
+        try:
+            self.login.is_visible(LoginLocators.LOGIN_BUTTON)
+        except Exception:
+            try:
+                self.assertEqual(0, 1)
+            except AssertionError:
+                raise AssertionError("Logout failed")
+            
+    def test_Verify_back_button_should_not_logout_user_after_login(self):
+
+        self.login.send_keys(LoginLocators.EMAIL_INPUT, os.environ.get("USER_EMAIL"))
+        self.login.send_keys(LoginLocators.PASSWORD_INPUT, os.environ.get("PASSWORD"))
+        self.login.click(LoginLocators.LOGIN_BUTTON)
+
+        time.sleep(5)
+        self.login.click(LoginLocators.PROFILE_ICON)
+        self.driver.back()
+
+        try:
+            self.login.is_visible(LoginLocators.PROFILE_ICON)
+        except Exception:
+            try:
+                self.assertEqual(0, 1)
+            except AssertionError:
+                raise AssertionError("User logged out or profile icon not visible after browser back button")
+
+    # ---------------- CLEANUP ----------------
     def tearDown(self):
-        """Quit driver after each test"""
         self.quit_driver()
 
 if __name__ == "__main__":

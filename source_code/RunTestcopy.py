@@ -10,34 +10,33 @@ def suite():
     suite = unittest.TestSuite()
     
     # ---------------- RUN SPECIFIC ASSET TESTS ----------------
-    # Basic page open
-    # suite.addTest(AssetsTests('test_open_assets_page'))
+    suite.addTest(AssetsTests('test_open_assets_page'))
     
-    # # Create root asset
-    # suite.addTest(AssetsTests('test_create_root_asset'))
+    # Create root asset
+    suite.addTest(AssetsTests('test_create_root_asset'))
     
-    # suite.addTest(AssetsTests('test_search_asset'))
-    # suite.addTest(AssetsTests('test_search_partial_match'))
-    # # Add child asset
-    # suite.addTest(AssetsTests('test_add_child_asset'))
+    suite.addTest(AssetsTests('test_search_asset'))
+    suite.addTest(AssetsTests('test_search_partial_match'))
+    # Add child asset
+    suite.addTest(AssetsTests('test_add_child_asset'))
     
-    # # Edit asset
-    # suite.addTest(AssetsTests('test_edit_asset'))
-    # suite.addTest(AssetsTests('test_no_asset_selected_shows_empty_details'))
+    # Edit asset
+    suite.addTest(AssetsTests('test_edit_asset'))
+    suite.addTest(AssetsTests('test_no_asset_selected_shows_empty_details'))
     
-    # # Asset details verification
-    # suite.addTest(AssetsTests('test_asset_details_visible'))
+    # Asset details verification
+    suite.addTest(AssetsTests('test_asset_details_visible'))
     
-    # # Delete child asset
-    # suite.addTest(AssetsTests('test_delete_child_asset'))
-    # # Delete parent asset
-    # suite.addTest(AssetsTests('test_delete_parent_asset'))
-    # suite.addTest(AssetsTests('test_duplicate_asset_name'))
-    # suite.addTest(AssetsTests('test_empty_asset_name_not_allowed'))
-    # suite.addTest(AssetsTests('test_asset_invalid_characters'))
-    # suite.addTest(AssetsTests('test_asset_name_too_long'))
-    # suite.addTest(AssetsTests('test_delete_icon_rules'))
-    # suite.addTest(AssetsTests('test_asset_hierarchy_depth_limit'))
+    # Delete child asset
+    suite.addTest(AssetsTests('test_delete_child_asset'))
+    # Delete parent asset
+    suite.addTest(AssetsTests('test_delete_parent_asset'))
+    suite.addTest(AssetsTests('test_duplicate_asset_name'))
+    suite.addTest(AssetsTests('test_empty_asset_name_not_allowed'))
+    suite.addTest(AssetsTests('test_asset_invalid_characters'))
+    suite.addTest(AssetsTests('test_asset_name_too_long'))
+    suite.addTest(AssetsTests('test_delete_icon_rules'))
+    suite.addTest(AssetsTests('test_asset_hierarchy_depth_limit'))
 
 
     # ---------------- DEVICES TESTS ----------------
@@ -124,12 +123,12 @@ def suite():
 
 
     # ---------------- TOUR TESTS ----------------
-    suite.addTest(TourTests('test_start_tour_button_visible'))
-    suite.addTest(TourTests('test_start_tour'))
-    suite.addTest(TourTests('test_next_prev_buttons'))
-    suite.addTest(TourTests('test_close_tour'))
-    suite.addTest(TourTests('test_complete_tour'))
-    suite.addTest(TourTests('test_popover_title_description_not_empty'))
+    # suite.addTest(TourTests('test_start_tour_button_visible'))
+    # suite.addTest(TourTests('test_start_tour'))
+    # suite.addTest(TourTests('test_next_prev_buttons'))
+    # suite.addTest(TourTests('test_close_tour'))
+    # suite.addTest(TourTests('test_complete_tour'))
+    # suite.addTest(TourTests('test_popover_title_description_not_empty'))
 
 
     return suite

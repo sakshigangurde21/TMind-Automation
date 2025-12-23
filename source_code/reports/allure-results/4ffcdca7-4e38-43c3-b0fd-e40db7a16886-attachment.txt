@@ -1,0 +1,1 @@
+SUCCESS TOAST: Device "BatteryMonitor_01" deleted successfully!

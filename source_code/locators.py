@@ -1,16 +1,16 @@
 from selenium.webdriver.common.by import By
 
-# Login Page Locators
 class LoginLocators:
     EMAIL_INPUT = (By.XPATH, "//input[@placeholder='Enter email']")
     PASSWORD_INPUT = (By.XPATH, "//input[@placeholder='Enter password']")
     LOGIN_BUTTON = (By.XPATH, "//button[text()='Login']")
     ERROR_MSG = (By.XPATH, "//*[contains(@class,'text-red-500')]")
-
     PROFILE_ICON = (By.XPATH, "//button[./div[contains(@class,'bg-primary')]]")
     LOGOUT_BUTTON = (By.XPATH, "//div[@role='menuitem' and text()='Logout']")
+    TOAST_ERROR = (By.CSS_SELECTOR, ".Toastify__toast--error")
+    TOAST_SUCCESS = (By.CSS_SELECTOR, ".Toastify__toast--success")
 
-# SignUp Page Locators
+
 class SignUpLocators:
     SIGN_UP_LINK = (By.XPATH, "//span[contains(text(),'Sign up')]")
     USERNAME_FIELD = (By.CSS_SELECTOR, "input[placeholder='Enter username']")
@@ -24,17 +24,11 @@ class SignUpLocators:
     TOAST_ERROR = (By.CSS_SELECTOR, ".Toastify__toast--error")
     TOAST_SUCCESS = (By.CSS_SELECTOR, ".Toastify__toast--success")
 
-# Asset Page Locators
 class AssetLocators:
-
-    # ---------- Left Menu ----------
     ASSETS_MENU = (By.XPATH, "//span[text()='Assets']")
-
-    # ---------- Main Page ----------
     ADD_ROOT_BTN = (By.XPATH, "//button[contains(.,'Add Root')]")
     SEARCH_INPUT = (By.XPATH, "//input[contains(@placeholder,'Search')]")
 
-    # ---------- Add Root Modal ----------
     ASSET_NAME_INPUT = (By.XPATH, "//input[@id='name' or contains(@placeholder,'Enter root asset')]")
     ADD_BTN = (By.XPATH, "//button[normalize-space()='Add']")
 
@@ -49,26 +43,30 @@ class AssetLocators:
         return (
             By.XPATH,
             f"//span[text()='{name}']"
-            "/ancestor::div[contains(@class,'hover:bg-accent')]"
-        )
+            "/ancestor::div[contains(@class,'hover:bg-accent')]")
 
     def ADD_CHILD_ICON(name):
         return (
-            By.XPATH, 
-            f"//span[text()='{name}']/ancestor::div[contains(@class,'hover:bg-accent')]//button[1]"
-        )
+        By.XPATH,
+        f"//span[normalize-space(text())='{name}']"
+        "/ancestor::div[contains(@class,'flex') and contains(@class,'items-center') and contains(@class,'justify-between')]"
+        "//button[@id='add-subasset-btn']")
+
 
     def EDIT_ICON(name):
         return (
-            By.XPATH, 
-            f"//span[text()='{name}']/ancestor::div[contains(@class,'hover:bg-accent')]//button[2]"
-        )
+        By.XPATH,
+        f"//span[normalize-space(text())='{name}']"
+        "/ancestor::div[contains(@class,'flex') and contains(@class,'items-center') and contains(@class,'justify-between')]"
+        "//button[@id='edit-asset-btn']")
+
 
     def DELETE_ICON(name):
         return (
-            By.XPATH, 
-            f"//span[text()='{name}']/ancestor::div[contains(@class,'hover:bg-accent')]//button[3]"
-        )
+        By.XPATH,
+        f"//span[normalize-space(text())='{name}']"
+        "/ancestor::div[contains(@class,'flex') and contains(@class,'items-center') and contains(@class,'justify-between')]"
+        "//button[@id='delete-asset-btn']")
 
    # ---------- Add Sub-Asset Modal ----------
     SUB_ASSET_NAME_INPUT = (By.XPATH, "//input[@placeholder='Enter Asset Name' and @name='name']")
@@ -84,9 +82,11 @@ class AssetLocators:
 
     def EXPAND_BTN(name):
         return (
-            By.XPATH, f"//span[normalize-space(text())='{name}']/preceding-sibling::button")
-        
-    
+        By.XPATH,
+        f"//span[normalize-space(text())='{name}']"
+        "/ancestor::div[contains(@class,'gap-2')]"
+        "/button")
+
     NO_ASSET_SELECTED = (By.XPATH, "//*[text()='No Asset Selected']")
 
     # Asset in the list by name
@@ -204,8 +204,14 @@ class DeviceLocators:
 
     SUBSCRIBE_BUTTON = (By.XPATH, "//button[normalize-space()='Subscribe']")
 
-
-
+    IMPORT_BULK_BUTTON = (By.ID, "import-bulk-btn")
+    UPLOAD_CARD = (By.XPATH, "//div[.//div[text()='Upload CSV / Excel']]")
+    FILE_INPUT = (By.CSS_SELECTOR, "input[type='file']")
+    CHOOSE_FILE_BUTTON = (By.XPATH, "//button[contains(text(),'Choose file')]")
+    CLEAR_FILE_BUTTON = (By.XPATH, "//button[contains(text(),'Clear')]")
+    SAVE_DEVICES_BUTTON = (By.XPATH, "//button[contains(text(),'Save Devices')]")
+    CSV_READY_MESSAGE = (By.XPATH, "//div[contains(text(),'CSV is ready to upload')]")
+    UPLOAD_SUCCESS_TOAST = (By.XPATH, "//div[contains(text(),'uploaded successfully')]")
 
 
 class ManageUserLocators:

@@ -1,0 +1,2 @@
+SUCCESS TOAST: Register added locally, please save to persist
+SUCCESS TOAST: Slave created on server

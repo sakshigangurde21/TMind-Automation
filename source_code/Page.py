@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from locators import LoginLocators, SignUpLocators, AssetLocators, DeviceLocators, ManageUserLocators, SignalLocators, TourLocators
 import os
 import time
+import unittest
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select
 
@@ -23,6 +24,15 @@ class BasePage:
 
     def get_element(self, locator):
         return self.wait.until(EC.visibility_of_element_located(locator))
+    
+    def is_visible(self, locator, timeout=10):
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                EC.visibility_of_element_located(locator)
+            )
+            return True
+        except:
+            return False    
 
     def get_attr(self, locator, attribute):
         return self.get_element(locator).get_attribute(attribute)
@@ -83,45 +93,9 @@ class LoginPage(BasePage):
     def click_login(self):
         self.click(LoginLocators.LOGIN_BUTTON)
 
-    def is_error_displayed(self, timeout=5):
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.visibility_of_element_located(LoginLocators.ERROR_MSG))
-            return True
-        except:
-            return False
-
-    def get_error_messages(self, timeout=5):
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.visibility_of_element_located(LoginLocators.ERROR_MSG))
-            elements = self.driver.find_elements(*LoginLocators.ERROR_MSG)
-            return [e.text.strip() for e in elements if e.text.strip()]
-        except:
-            return []
-
-    def password_type(self):
-        return self.get_attr(LoginLocators.PASSWORD_INPUT, "type")
-
-    def clear_login_fields(self):
-        email_input = self.get_element(LoginLocators.EMAIL_INPUT)
-        password_input = self.get_element(LoginLocators.PASSWORD_INPUT)
-        email_input.clear()
-        password_input.clear()
-        self.driver.execute_script("arguments[0].value = '';", email_input)
-        self.driver.execute_script("arguments[0].value = '';", password_input)
-
     def is_dashboard_displayed(self):
         self.wait.until(EC.url_contains("/dashboard"))
         return "/dashboard" in self.driver.current_url
-
-    def click_profile_icon(self):
-        self.wait_for_toast_to_disappear()
-        self.click(LoginLocators.PROFILE_ICON)
-
-    def click_logout(self):
-        self.click(LoginLocators.LOGOUT_BUTTON)
-
 
 # ========================= SIGN UP PAGE =========================
 class SignUpPage(BasePage):
@@ -136,21 +110,6 @@ class SignUpPage(BasePage):
         self.click(SignUpLocators.SIGN_UP_LINK)
         self.wait.until(EC.visibility_of_element_located(SignUpLocators.USERNAME_FIELD))
 
-    def enter_username(self, username):
-        self.send_keys(SignUpLocators.USERNAME_FIELD, username)
-
-    def enter_email(self, email):
-        self.send_keys(SignUpLocators.EMAIL_FIELD, email)
-
-    def enter_password(self, password):
-        self.send_keys(SignUpLocators.PASSWORD_FIELD, password)
-
-    def click_create_account(self):
-        self.click(SignUpLocators.CREATE_ACCOUNT_BUTTON)
-
-    def click_login_here(self):
-        self.click(SignUpLocators.LOGIN_HERE_LINK)
-
     def password_type(self):
         return self.get_attr(SignUpLocators.PASSWORD_FIELD, "type")
 
@@ -162,9 +121,7 @@ class SignUpPage(BasePage):
         except:
             return False
 
-    def is_signup_successful(self):
-        return self.is_success_text_visible()
-
+  
     def is_error_message_displayed(self):
         return len(self.driver.find_elements(*SignUpLocators.ERROR_MESSAGES)) > 0
 
@@ -188,40 +145,25 @@ class AssetPage(BasePage):
     def __init__(self, driver):
         super().__init__(driver)
 
-    def open_assets(self):
-        self.click(AssetLocators.ASSETS_MENU)
-
-    def click_add_root(self):
-        self.click(AssetLocators.ADD_ROOT_BTN)
-
-    def enter_asset_name(self, name):
-        self.send_keys(AssetLocators.ASSET_NAME_INPUT, name)
-
-    def create_asset(self, name):
-        """Use ONLY for valid successful create cases"""
-        self.enter_asset_name(name)
-        self.click(AssetLocators.ADD_BTN)
-
-    # ---------- READ / SELECT ----------
-    def select_asset(self, name):
+    def select_asset(self, name): 
         self.click(AssetLocators.ASSET_NAME_NODE(name))
 
-    # ---------- SEARCH ----------
-    def search_asset(self, value):
-        self.send_keys(AssetLocators.SEARCH_INPUT, value)
-
+    def can_add_child(self, asset_name): 
+        try: 
+            self.wait.until( EC.visibility_of_element_located( AssetLocators.ADD_CHILD_ICON(asset_name) ) ) 
+            return True 
+        except: 
+            return False
+        
     # ---------- INTERNAL COMMON HELPERS ----------
-    def _hover_on_asset_row(self, name):
+    def _hover_asset_row(self, name):
         """Hover full asset ROW (not only the text span)"""
         asset_row = self.wait.until(
             EC.visibility_of_element_located(
-                AssetLocators.ASSET_ROW(name)
-        )
-    )
+                AssetLocators.ASSET_ROW(name)))
 
     # Scroll
-        self.driver.execute_script(
-            "arguments[0].scrollIntoView({block:'center'});",asset_row)
+        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});",asset_row)
         time.sleep(0.3)
 
     # Hover row so icons appear
@@ -232,107 +174,24 @@ class AssetPage(BasePage):
 
         return asset_row
 
-
-    # ---------- UPDATE ----------
-    def edit_asset(self, old_name, new_name):
-        self._hover_on_asset_row(old_name)
-
-        self.driver.execute_script(
-            "arguments[0].click();",
-            self.get_element(AssetLocators.EDIT_ICON(old_name))
-        )
-
-        self.send_keys(AssetLocators.EDIT_INPUT, new_name)
-        self.click(AssetLocators.SAVE_CHANGES_BTN)
-
-    # ---------- DELETE ----------
-    def delete_asset(self, name):
-        self._hover_on_asset_row(name)
-
-        self.driver.execute_script(
-            "arguments[0].click();",
-            self.get_element(AssetLocators.DELETE_ICON(name))
-        )
-
-        self.click(AssetLocators.CONFIRM_DELETE_BTN)
-
-    # ---------- ADD CHILD ----------
-    def add_child_asset(self, parent_name, child_name):
-        self._hover_on_asset_row(parent_name)
-
-        self.driver.execute_script(
-            "arguments[0].click();",
-            self.get_element(AssetLocators.ADD_CHILD_ICON(parent_name))
-        )
-
-        self.send_keys(AssetLocators.SUB_ASSET_NAME_INPUT, child_name)
-        self.click(AssetLocators.SUB_ASSET_SAVE_BTN)
-
     # ---------- TREE CONTROL ----------
     def expand_asset(self, name):
         self.driver.execute_script(
             "arguments[0].click();",
-            self.get_element(AssetLocators.EXPAND_BTN(name))
-        )
+            self.get_element(AssetLocators.EXPAND_BTN(name)))
         time.sleep(0.3)
 
-    # ---------- VERIFICATIONS ----------
-    def verify_asset_visible(self, name):
-        self.wait.until(EC.visibility_of_element_located(
-            AssetLocators.ASSET_NAME_NODE(name)))
-
-    def verify_delete_icon_visible(self, name):
-        self.wait.until(EC.visibility_of_element_located(
-            AssetLocators.DELETE_ICON(name)))
-
-    def verify_delete_icon_hidden(self, name):
-        self.wait.until_not(
-            EC.presence_of_element_located(
-                AssetLocators.DELETE_ICON(name)))
-
-    def get_asset_type(self):
-        return self.get_element(AssetLocators.TYPE_VALUE).text
-
-    def get_asset_level(self):
-        return self.get_element(AssetLocators.LEVEL_VALUE).text
-
-    def get_sub_assets(self):
-        elements = self.wait.until(
-            EC.visibility_of_all_elements_located(
-                AssetLocators.SUB_ASSETS)
-        )
-        return [el.text.strip() for el in elements]
-
-    def verify_asset_details_visible(self):
-        assert self.get_asset_type() != "", "Asset Type not visible"
-        assert self.get_asset_level() != "", "Asset Level not visible"
-
-    # ---------- EMPTY STATE ----------
-    def is_no_asset_selected_displayed(self):
-        try:
-            return self.wait.until(
-                EC.visibility_of_element_located(
-                    AssetLocators.NO_ASSET_SELECTED)
-            ).is_displayed()
-        except:
-            return False
-
-    def verify_no_asset_selected_details_empty(self):
-        assert self.is_no_asset_selected_displayed(), \
-            "'No Asset Selected' message not displayed"
-
-    # ---------- PERMISSIONS ----------
-    def can_add_child(self, asset_name):
-        try:
-            self.wait.until(
-                EC.visibility_of_element_located(
-                    AssetLocators.ADD_CHILD_ICON(asset_name)
-                )
-            )
-            return True
-        except:
-            return False
-
+    def expand_path(self, path_list):
+        """
+        Expand all nodes in the path to ensure the target node is visible.
+        path_list: ['Root_1', 'Root_1_Child', ...]
+        """
+        for node in path_list:
+            try:
+                self.expand_asset(node)
+            except Exception:
+                pass
+    
 
 class DevicePage(BasePage):
     def __init__(self, driver):
@@ -378,6 +237,9 @@ class DevicePage(BasePage):
         actual = toast.text.strip()
         print("ERROR TOAST:", actual)
         assert expected_text in actual
+
+    def get_hidden_element(self, locator):
+        return self.driver.find_element(*locator)
 
     # ---------------- Device Search ----------------
     def search_device(self, device_name):
@@ -765,8 +627,7 @@ class TourPage(BasePage):
     def wait_until_popover_disappears(self, timeout=5):
         """Wait until the popover container disappears."""
         WebDriverWait(self.driver, timeout).until(
-            EC.invisibility_of_element_located(TourLocators.POPOVER_CONTAINER)
-        )
+            EC.invisibility_of_element_located(TourLocators.POPOVER_CONTAINER))
 
     # ---------------- Full Tour Flow ----------------
     def complete_tour(self):

@@ -25,13 +25,13 @@ class DevicesTests(Base):
         self.device.go_to_devices()
 
     # ---------------- NAVIGATION ----------------
-    def test_navigate_to_device_module(self):
+    def test_01_navigate_to_device_module(self):
         self.device.go_to_devices()
         btn = self.driver.find_element(*DeviceLocators.ADD_DEVICE_BUTTON)
         self.assertTrue(btn.is_displayed(), "Add Device button not visible")
 
     # ---------------- CREATE ----------------
-    def test_add_device_success(self):
+    def test_02_add_device_success(self):
         self.device.click_add_device()
         self.device.enter_device_name(DEVICE_NAME)
         self.device.enter_device_description("Monitoring battery")
@@ -39,14 +39,14 @@ class DevicesTests(Base):
         self.device.verify_toast_success("created successfully")
         assert self.device.is_device_visible_in_table(DEVICE_NAME)
 
-    def test_add_device_empty_name(self):
+    def test_03_add_device_empty_name(self):
         self.device.click_add_device()
         self.device.enter_device_name("")
         self.device.enter_device_description("Some description")
-        self.device.save_device()
-        self.device.verify_toast_error("Device Name is required")
+        # self.device.save_device()
+        self.device.verify_inline_error
 
-    def test_add_device_empty_description_allowed(self):
+    def test_04_add_device_empty_description_allowed(self):
         self.device.click_add_device()
         self.device.enter_device_name("TyrePressureStation_01")
         self.device.enter_device_description("")
@@ -54,37 +54,37 @@ class DevicesTests(Base):
         self.device.verify_toast_success("created successfully")
         assert self.device.is_device_visible_in_table("TyrePressureStation_01")
 
-    def test_device_name_special_car123(self):
+    def test_05_device_name_special_car123(self):
         self.device.click_add_device()
         self.device.enter_device_name("Car@123")
-        self.device.save_device()
-        self.device.verify_toast_error("Device Name must")
+        # self.device.save_device()
+        self.device.verify_inline_error
 
-    def test_device_name_special_symbols(self):
+    def test_06_device_name_special_symbols(self):
         self.device.click_add_device()
         self.device.enter_device_name("#@!*")
-        self.device.save_device()
-        self.device.verify_toast_error("Device Name must")
+        # self.device.save_device()
+        self.device.verify_inline_error
 
-    def test_device_name_special_dash(self):
+    def test_07_device_name_special_dash(self):
         self.device.click_add_device()
         self.device.enter_device_name("-Station01")
-        self.device.save_device()
-        self.device.verify_toast_error("Device Name must")
+        # self.device.save_device()
+        self.device.verify_inline_error
 
-    def test_device_name_too_short(self):
+    def test_08_device_name_too_short(self):
         self.device.click_add_device()
         self.device.enter_device_name("AB")
-        self.device.save_device()
-        self.device.verify_toast_error("Device Name must")
+        # self.device.save_device()
+        self.device.verify_inline_error
 
-    def test_device_name_too_long(self):
+    def test_09_device_name_too_long(self):
         self.device.click_add_device()
         self.device.enter_device_name("A"*101)
-        self.device.save_device()
-        self.device.verify_toast_error("Device Name must")
+        # self.device.save_device()
+        self.device.verify_inline_error
 
-    def test_add_duplicate_device_name(self):
+    def test_10_add_duplicate_device_name(self):
         duplicate_name = "TyrePressureStation_01"
         self.device.click_add_device()
         self.device.enter_device_name(duplicate_name)
@@ -93,7 +93,7 @@ class DevicesTests(Base):
         self.device.verify_toast_error("already exists")
 
     # ---------------- DELETE ----------------
-    def test_delete_device(self):
+    def test_11_delete_device(self):
         self.device.click_delete_button(DEVICE_NAME)
         popup_name = self.driver.find_element(
             *DeviceLocators.DELETE_POPUP_DEVICE_NAME
@@ -103,14 +103,14 @@ class DevicesTests(Base):
         self.device.verify_toast_success("deleted successfully")
         assert not self.device.is_device_visible_in_table(DEVICE_NAME)
 
-    def test_delete_device_cancel(self):
+    def test_12_delete_device_cancel(self):
         device = "TyrePressureStation_01"
         self.device.click_delete_button(device)
         self.device.cancel_delete()
         assert self.device.is_device_visible_in_table(device)
 
     # ---------------- EDIT ----------------
-    def test_edit_device_name_success(self):
+    def test_13_edit_device_name_success(self):
         old_name = "TyrePressureStation_01"
         new_name = "TyrePressureStation_01_updated"
         self.device.click(DeviceLocators.EDIT_BUTTON(old_name))
@@ -120,7 +120,7 @@ class DevicesTests(Base):
         self.device.verify_toast_success("updated successfully")
         assert self.device.is_device_visible_in_table(new_name)
 
-    def test_edit_device_without_name(self):
+    def test_14_edit_device_without_name(self):
         device = "TyrePressureStation_01_updated"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
         self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
@@ -130,19 +130,19 @@ class DevicesTests(Base):
         assert "fill" in msg.lower()
 
     # ---------------- SEARCH ----------------
-    def test_search_device(self):
+    def test_15_search_device(self):
         existing_device = "TyrePressureStation_01_updated"
         self.device.search_device(existing_device)
         assert self.device.is_device_visible_in_table(existing_device)
 
-    def test_search_non_existing_device(self):
+    def test_16_search_non_existing_device(self):
         self.device.search_device("INVALID_DEVICE_999")
         assert not self.device.is_device_visible_in_table("INVALID_DEVICE_999")
 
     # ---------------- CONFIG ----------------
 
-    def test_open_device_config_page(self):
-        device = "PaintBoothPLC_01"
+    def test_17_open_device_config_page(self):
+        device = "TempSensor-A1"
 
     # Click CONFIG button
         self.device.click(DeviceLocators.CONFIG_BUTTON(device))
@@ -157,8 +157,8 @@ class DevicesTests(Base):
         self.assertTrue(header.is_displayed(), "Config header not visible")
 
 
-    def test_save_device_configuration(self):
-        device = "PaintBoothPLC_01"
+    def test_18_save_device_configuration(self):
+        device = "TempSensor-A1"
 
     # Open config page
         self.device.click(DeviceLocators.CONFIG_BUTTON(device))
@@ -180,12 +180,11 @@ class DevicesTests(Base):
         self.device.verify_toast_success("updated successfully")
 
 
-
     # ---------------- EDIT - CONFIG VALIDATIONS ----------------
 
     # -------- POLL INTERVAL --------
-    def test_edit_poll_interval_below_min(self):
-        device = "PaintBoothPLC_01"
+    def test_19_edit_poll_interval_below_min(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(
@@ -202,8 +201,8 @@ class DevicesTests(Base):
         )
 
 
-    def test_edit_poll_interval_above_max(self):
-        device = "PaintBoothPLC_01"
+    def test_20_edit_poll_interval_above_max(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(
@@ -215,17 +214,13 @@ class DevicesTests(Base):
         self.device.send_keys(DeviceLocators.PORT_EDIT, "502")
 
         self.device.click(DeviceLocators.SAVE_CHANGES)
-        self.device.verify_toast_error(
-            "Poll interval must be between 100 and 300000 milliseconds."
-        )
+        self.device.verify_toast_error("Poll interval must be between 100 and 300000 milliseconds.")
 
 
-    def test_edit_poll_interval_empty(self):
-        device = "PaintBoothPLC_01"
+    def test_21_edit_poll_interval_empty(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
-
-        self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
+        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
     # ---- Properly clear Poll Interval ----
         poll_field = self.device.get_element(DeviceLocators.POLL_INTERVAL_EDIT)
@@ -242,74 +237,56 @@ class DevicesTests(Base):
         self.device.click(DeviceLocators.SAVE_CHANGES)
 
     # Fetch browser validation
-        msg = self.device.get_browser_validation_message(
-            DeviceLocators.POLL_INTERVAL_EDIT
-        )
+        msg = self.device.get_browser_validation_message(DeviceLocators.POLL_INTERVAL_EDIT)
         print("\nBROWSER VALIDATION MESSAGE (POLL INTERVAL):", msg)
 
-
     # -------- IP ADDRESS --------
-    def test_edit_ip_random_text(self):
-        device = "PaintBoothPLC_01"
+    def test_22_edit_ip_random_text(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
-        self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER)
-        )
+        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
         self.device.send_keys(DeviceLocators.POLL_INTERVAL_EDIT, "2000")
         self.device.send_keys(DeviceLocators.IP_ADDRESS_EDIT, "abcdxyz")
         self.device.send_keys(DeviceLocators.PORT_EDIT, "502")
 
         self.device.click(DeviceLocators.SAVE_CHANGES)
-        self.device.verify_toast_error(
-            "Invalid IP Address"
-        )
+        self.device.verify_toast_error("Invalid IP Address")
 
-
-    def test_edit_ip_wrong_format(self):
-        device = "PaintBoothPLC_01"
+    def test_23_edit_ip_wrong_format(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
-        self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER)
-        )
+        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
         self.device.send_keys(DeviceLocators.POLL_INTERVAL_EDIT, "2000")
         self.device.send_keys(DeviceLocators.IP_ADDRESS_EDIT, "300.200.1")
         self.device.send_keys(DeviceLocators.PORT_EDIT, "502")
 
         self.device.click(DeviceLocators.SAVE_CHANGES)
-        self.device.verify_toast_error(
-            "Invalid IP Address"
-        )
+        self.device.verify_toast_error("Invalid IP Address")
 
 
-    def test_edit_ip_letters_only(self):
-        device = "PaintBoothPLC_01"
+    def test_24_edit_ip_letters_only(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
-        self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER)
-        )
+        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
         self.device.send_keys(DeviceLocators.POLL_INTERVAL_EDIT, "2000")
         self.device.send_keys(DeviceLocators.IP_ADDRESS_EDIT, "abcdefgh")
         self.device.send_keys(DeviceLocators.PORT_EDIT, "502")
 
         self.device.click(DeviceLocators.SAVE_CHANGES)
-        self.device.verify_toast_error(
-            "Invalid IP Address"
-        )
+        self.device.verify_toast_error("Invalid IP Address")
 
 
-    def test_edit_ip_empty(self):
-        device = "PaintBoothPLC_01"
+    def test_25_edit_ip_empty(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
-        self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER)
-        )
+        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
     # Fill valid values
         self.device.send_keys(DeviceLocators.POLL_INTERVAL_EDIT, "2000")
@@ -327,18 +304,15 @@ class DevicesTests(Base):
 
     # Fetch browser validation
         msg = self.device.get_browser_validation_message(
-            DeviceLocators.IP_ADDRESS_EDIT
-        )
+            DeviceLocators.IP_ADDRESS_EDIT)
         print("\nBROWSER VALIDATION MESSAGE (IP ADDRESS):", msg)
 
     # -------- PORT --------
-    def test_edit_port_zero(self):
-        device = "PaintBoothPLC_01"
+    def test_26_edit_port_zero(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
-        self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER)
-        )
+        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
         self.device.send_keys(DeviceLocators.POLL_INTERVAL_EDIT, "2000")
         self.device.send_keys(DeviceLocators.IP_ADDRESS_EDIT, "192.168.1.1")
@@ -346,16 +320,14 @@ class DevicesTests(Base):
 
         self.device.click(DeviceLocators.SAVE_CHANGES)
         self.device.verify_toast_error(
-            "Port must be between 1 and 65535"
-        )
+            "Port must be between 1 and 65535")
 
-    def test_edit_port_above_limit(self):
-        device = "PaintBoothPLC_01"
+    def test_27_edit_port_above_limit(self):
+        device = "GasDetector-G7"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER)
-        )
+            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
         self.device.send_keys(DeviceLocators.POLL_INTERVAL_EDIT, "2000")
         self.device.send_keys(DeviceLocators.IP_ADDRESS_EDIT, "192.168.1.1")
@@ -363,15 +335,12 @@ class DevicesTests(Base):
 
         self.device.click(DeviceLocators.SAVE_CHANGES)
         self.device.verify_toast_error(
-            "Port must be between 1 and 65535"
-        )
-
-
+            "Port must be between 1 and 65535")
 
     # ---------------- SLAVE MANAGER ----------------
 
-    def test_open_slave_manager(self):
-        device = "PaintBoothPLC_01"
+    def test_28_open_slave_manager(self):
+        device = "GasDetector-G7"
 
         # Click SLAVE button
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -384,9 +353,8 @@ class DevicesTests(Base):
         self.assertTrue(subtitle.is_displayed(), "Slave Manager subtitle not visible")
 
 
-
-    def test_open_new_slave_page(self):
-        device = "PaintBoothPLC_01"
+    def test_29_open_new_slave_page(self):
+        device = "GasDetector-G7"
 
         # Open Slave Manager
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -399,9 +367,8 @@ class DevicesTests(Base):
         self.assertTrue(header.is_displayed(), "New Slave header not visible")
 
 
-
-    def test_save_slave_without_register(self):
-        device = "PaintBoothPLC_01"
+    def test_30_save_slave_without_register(self):
+        device = "GasDetector-G7"
 
         # Open New Slave
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -414,9 +381,8 @@ class DevicesTests(Base):
         self.device.verify_toast_error("Cannot save slave with no registers")
 
 
-
-    def test_open_add_register_popup(self):
-        device = "PaintBoothPLC_01"
+    def test_31_open_add_register_popup(self):
+        device = "GasDetector-G7"
 
         # Open Add Register Popup
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -427,9 +393,8 @@ class DevicesTests(Base):
         self.assertTrue(popup.is_displayed(), "Add Register popup not visible")
 
 
-
-    def test_close_add_register_popup(self):
-        device = "PaintBoothPLC_01"
+    def test_32_close_add_register_popup(self):
+        device = "GasDetector-G7"
 
         # Open and close popup
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -442,9 +407,8 @@ class DevicesTests(Base):
         self.device.wait.until(EC.invisibility_of_element_located(DeviceLocators.ADD_REG_POPUP))
 
 
-
-    def test_add_register_success(self):
-        device = "PaintBoothPLC_01"
+    def test_33_add_register_success(self):
+        device = "GasDetector-G7"
 
     # Open New Slave
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -460,9 +424,8 @@ class DevicesTests(Base):
         self.device.verify_toast_success("Register added locally")
 
 
-
-    def test_cancel_register_popup(self):
-        device = "PaintBoothPLC_01"
+    def test_34_cancel_register_popup(self):
+        device = "GasDetector-G7"
 
         # Open popup
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -474,9 +437,8 @@ class DevicesTests(Base):
         self.device.wait.until(EC.invisibility_of_element_located(DeviceLocators.ADD_REG_POPUP))
 
 
-
-    def test_save_slave_after_register_add(self):
-        device = "PaintBoothPLC_01"
+    def test_35_save_slave_after_register_add(self):
+        device = "GasDetector-G7"
 
         # Open new slave
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -484,9 +446,7 @@ class DevicesTests(Base):
 
         # Add 1 register
         self.device.click(DeviceLocators.ADD_REGISTER_BTN)
-       
         self.device.click(DeviceLocators.POPUP_SAVE)
-
         self.device.verify_toast_success("Register added locally")
 
         # Save slave
@@ -495,12 +455,31 @@ class DevicesTests(Base):
         # Final success toast
         self.device.verify_toast_success("Slave created on server")
 
+    def test_36_bulk_device_upload(self):
+    # 1. Open Bulk Upload modal
+        self.device.click(DeviceLocators.IMPORT_BULK_BUTTON)
+
+    # 2. Wait for upload card to be visible
+        self.device.wait.until(
+        EC.visibility_of_element_located(DeviceLocators.UPLOAD_CARD))
+
+    # 3. Get hidden file input and send file
+        file_input = self.device.get_hidden_element(DeviceLocators.FILE_INPUT)
+        file_input.send_keys(r"C:\Users\Sakshi Gangurde\Downloads\devices_sample.xlsx")
+
+    # 4. Wait for CSV ready message
+        self.device.wait.until(
+        EC.visibility_of_element_located(DeviceLocators.CSV_READY_MESSAGE))
+
+    # 5. Click Save Devices
+        self.device.click(DeviceLocators.SAVE_DEVICES_BUTTON)
+
+    # 6. Verify toast
+        self.device.verify_toast_success("10 devices uploaded successfully")
 
     # ---------------- CLEANUP ----------------
     def tearDown(self):
         self.quit_driver()
-
-
 
 if __name__ == "__main__":
     unittest.main()

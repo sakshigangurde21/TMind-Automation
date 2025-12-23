@@ -99,12 +99,10 @@ class SignalTests(Base):
         self.assertNotEqual(
             signals_1,
             signals_2,
-            "Signals did not change after asset switch"
-        )
+            "Signals did not change after asset switch")
 
     def tearDown(self):
         self.quit_driver()
-
 
 if __name__ == "__main__":
     unittest.main()

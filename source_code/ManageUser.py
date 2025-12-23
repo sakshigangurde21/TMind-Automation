@@ -68,14 +68,14 @@ class ManageUserTests(Base):
 
     # ---------------- DELETE USER ----------------
     def test_delete_user_cancel(self):
-        username = "exuser"
+        username = "sakshi"
         print("All users:", self.manage_user.get_all_usernames())   # 👈 ADD HERE
         self.manage_user.click_delete_user(username)
         self.manage_user.cancel_delete()
         self.assertTrue(self.manage_user.is_user_in_table(username))
 
     def test_delete_user_confirm(self):
-        username = "exuser"
+        username = "anu"
         print("All users:", self.manage_user.get_all_usernames())   # 👈 ADD HERE
         self.assertTrue(self.manage_user.is_user_in_table(username))
         self.manage_user.click_delete_user(username)
@@ -183,8 +183,6 @@ class ManageUserTests(Base):
 
     def tearDown(self):
         self.quit_driver()
-
-
 
 
 if __name__ == "__main__":

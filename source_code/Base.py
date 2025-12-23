@@ -8,9 +8,7 @@ load_dotenv()
 
 class Base(unittest.TestCase):
     driver = None
-    """
-    Base class for initializing WebDriver.Test classes will inherit this.
-    """
+    
     def start_driver(self):
         # Create Downloads folder path inside project
         download_path = os.path.join(os.getcwd(), "Downloads")
@@ -19,10 +17,14 @@ class Base(unittest.TestCase):
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)
 
-        chrome_options.add_argument("window-size=1920x1080")
+        # chrome_options.add_argument("--headless=new")   # headless mode
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        self.driver = webdriver.Chrome(options=chrome_options)          # Initialize Chrome
+        self.driver = webdriver.Chrome(options=chrome_options)     # Initialize Chrome
         self.driver.maximize_window()
 
         return self.driver
