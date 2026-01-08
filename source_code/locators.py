@@ -10,7 +10,6 @@ class LoginLocators:
     TOAST_ERROR = (By.CSS_SELECTOR, ".Toastify__toast--error")
     TOAST_SUCCESS = (By.CSS_SELECTOR, ".Toastify__toast--success")
 
-
 class SignUpLocators:
     SIGN_UP_LINK = (By.XPATH, "//span[contains(text(),'Sign up')]")
     USERNAME_FIELD = (By.CSS_SELECTOR, "input[placeholder='Enter username']")
@@ -36,7 +35,7 @@ class AssetLocators:
 
     # ---------- Dynamic Locators ----------
     def ASSET_NAME_NODE(name):
-        return (By.XPATH, f"//*[text()='{name}']")
+        return (By.XPATH, f"//span[contains(@class,'text-sm') and contains(normalize-space(.),'{name}')]")
 
     @staticmethod
     def ASSET_ROW(name):
@@ -51,7 +50,6 @@ class AssetLocators:
         f"//span[normalize-space(text())='{name}']"
         "/ancestor::div[contains(@class,'flex') and contains(@class,'items-center') and contains(@class,'justify-between')]"
         "//button[@id='add-subasset-btn']")
-
 
     def EDIT_ICON(name):
         return (
@@ -154,8 +152,6 @@ class DeviceLocators:
 
     BACK_CONFIG = (By.XPATH, "//button[normalize-space(.)='Back']")
     SAVE_CONFIG = (By.XPATH, "//button[@type='submit' and normalize-space(.)='Save Configuration']")
-
-
 
 
 # slave

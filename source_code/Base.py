@@ -2,33 +2,55 @@ import os
 import unittest
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from dotenv import load_dotenv  
-
-load_dotenv()  
+from dotenv import load_dotenv
+import allure
+from datetime import datetime
+load_dotenv()
 
 class Base(unittest.TestCase):
     driver = None
     
-    def start_driver(self):
-        # Create Downloads folder path inside project
+    @classmethod
+    def start_driver(cls):
         download_path = os.path.join(os.getcwd(), "Downloads")
-        chrome_options = webdriver.ChromeOptions()
 
+        cls.screenshot_path = os.path.join(os.getcwd(), "Screenshots")
+        if not os.path.exists(cls.screenshot_path):
+            os.makedirs(cls.screenshot_path)
+
+        chrome_options = webdriver.ChromeOptions()
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)
-
-        # chrome_options.add_argument("--headless=new")   # headless mode
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        self.driver = webdriver.Chrome(options=chrome_options)     # Initialize Chrome
-        self.driver.maximize_window()
+        cls.driver = webdriver.Chrome(options=chrome_options)
+        cls.driver.maximize_window()
+        cls.driver.get(os.environ.get("BASE_URL"))
 
-        return self.driver
-
+        return cls.driver
+    
+    def attach_screenshot(self, suffix=""):
+        try:
+            if self.driver and self.driver.session_id:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                test_name = self._testMethodName
+                screenshot_name = f"{test_name}{suffix}_{timestamp}.png"
+                screenshot_file = os.path.join(self.screenshot_path, screenshot_name)
+                self.driver.save_screenshot(screenshot_file)          # Take screenshot
+                allure.attach.file(screenshot_file, name=screenshot_name, attachment_type=allure.attachment_type.PNG)     # Attach to Allure report
+                print(f"Screenshot saved: {screenshot_file}")
+                return screenshot_file
+        except Exception as e:
+            print(f"Failed to capture screenshot: {str(e)}")
+        return None
+    
     def quit_driver(self):
         if self.driver:
-            self.driver.quit()
+            try:
+                self.driver.quit()
+            except Exception as e:
+                print(f"Error while quitting driver: {str(e)}")

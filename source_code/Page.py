@@ -28,8 +28,7 @@ class BasePage:
     def is_visible(self, locator, timeout=10):
         try:
             WebDriverWait(self.driver, timeout).until(
-                EC.visibility_of_element_located(locator)
-            )
+                EC.visibility_of_element_located(locator))
             return True
         except:
             return False    
@@ -46,8 +45,7 @@ class BasePage:
     def get_toast_message(self, timeout=5):
         try:
             toast = WebDriverWait(self.driver, timeout).until(
-                EC.visibility_of_element_located((By.CSS_SELECTOR, ".Toastify__toast"))
-            )
+                EC.visibility_of_element_located((By.CSS_SELECTOR, ".Toastify__toast")))
             return toast.text.strip()
         except:
             return None
@@ -65,7 +63,6 @@ class BasePage:
         except:
             pass
 
-    # ---------- REUSABLE ERROR VERIFICATION ----------
     def verify_toast_error(self, locator, expected_text):
         toast = self.wait.until(
             EC.visibility_of_element_located(locator))
@@ -74,6 +71,35 @@ class BasePage:
     def verify_inline_error(self, locator):
         self.wait.until(
             EC.visibility_of_element_located(locator))
+        
+    # def clear_search(self):
+    #     search = self.wait.until(
+    #         EC.visibility_of_element_located(AssetLocators.SEARCH_INPUT))
+    #     search.clear()
+
+    def clear_search(self):
+        search = self.get_element(AssetLocators.SEARCH_INPUT)
+    
+    # Clear input via JS and trigger input event
+        self.driver.execute_script("""
+            arguments[0].value = '';
+            arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
+        """, search)
+    # Wait until the search input is truly empty
+        WebDriverWait(self.driver, 5).until(lambda d: search.get_attribute("value") == '')
+    # Wait until at least one asset is visible (or your "no assets" message disappears)
+        WebDriverWait(self.driver, 5).until(
+            lambda d: len(d.find_elements(By.XPATH, "//span[contains(@class,'text-sm')]")) > 0)
+        
+        
+    def search_asset(self, term):
+        search = self.get_element(AssetLocators.SEARCH_INPUT)
+        search.clear()
+        search.send_keys(term)
+
+    # Wait until at least one matching asset appears
+        WebDriverWait(self.driver, 5).until(
+            lambda d: len(d.find_elements(*AssetLocators.ASSET_NAME_NODE(term))) > 0)
 
 # ------------------------- LOGIN PAGE -------------------------
 class LoginPage(BasePage):

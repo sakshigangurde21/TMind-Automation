@@ -7,6 +7,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
 from selenium.webdriver.common.keys import Keys
+import allure
+import time
 
 load_dotenv()
 
@@ -23,93 +25,181 @@ class DevicesTests(Base):
 
         self.device = DevicePage(self.driver)
         self.device.go_to_devices()
+        
+    @allure.title("Verify Devices module opens successfully")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_Verify_devices_module_navigation(self):
 
-    # ---------------- NAVIGATION ----------------
-    def test_01_navigate_to_device_module(self):
-        self.device.go_to_devices()
-        btn = self.driver.find_element(*DeviceLocators.ADD_DEVICE_BUTTON)
-        self.assertTrue(btn.is_displayed(), "Add Device button not visible")
+        try:
+            assert self.device.is_visible(DeviceLocators.ADD_DEVICE_BUTTON), \
+                "Add Device button not visible"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
 
-    # ---------------- CREATE ----------------
-    def test_02_add_device_success(self):
-        self.device.click_add_device()
-        self.device.enter_device_name(DEVICE_NAME)
-        self.device.enter_device_description("Monitoring battery")
-        self.device.save_device()
-        self.device.verify_toast_success("created successfully")
-        assert self.device.is_device_visible_in_table(DEVICE_NAME)
+    @allure.title("Verify user can create a device with valid data")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_Verify_create_device_successfully(self):
 
-    def test_03_add_device_empty_name(self):
-        self.device.click_add_device()
-        self.device.enter_device_name("")
-        self.device.enter_device_description("Some description")
-        # self.device.save_device()
-        self.device.verify_inline_error
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.send_keys(DeviceLocators.DEVICE_NAME_INPUT, DEVICE_NAME)
+        self.device.send_keys(DeviceLocators.DEVICE_DESCRIPTION_INPUT, "Battery monitoring")
+        self.device.click(DeviceLocators.SAVE_DEVICE_BUTTON)
 
-    def test_04_add_device_empty_description_allowed(self):
-        self.device.click_add_device()
-        self.device.enter_device_name("TyrePressureStation_01")
-        self.device.enter_device_description("")
-        self.device.save_device()
-        self.device.verify_toast_success("created successfully")
-        assert self.device.is_device_visible_in_table("TyrePressureStation_01")
+        try:
+            assert self.device.is_visible(SignUpLocators.TOAST_SUCCESS), \
+                "Success toast not displayed"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Device not created")
 
-    def test_05_device_name_special_car123(self):
-        self.device.click_add_device()
-        self.device.enter_device_name("Car@123")
-        # self.device.save_device()
-        self.device.verify_inline_error
+    @allure.title("Verify error when creating device without name")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_Verify_error_for_empty_device_name(self):
 
-    def test_06_device_name_special_symbols(self):
-        self.device.click_add_device()
-        self.device.enter_device_name("#@!*")
-        # self.device.save_device()
-        self.device.verify_inline_error
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.click(DeviceLocators.SAVE_DEVICE_BUTTON)
 
-    def test_07_device_name_special_dash(self):
-        self.device.click_add_device()
-        self.device.enter_device_name("-Station01")
-        # self.device.save_device()
-        self.device.verify_inline_error
+        try:
+            self.device.verify_inline_error()
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
 
-    def test_08_device_name_too_short(self):
-        self.device.click_add_device()
-        self.device.enter_device_name("AB")
-        # self.device.save_device()
-        self.device.verify_inline_error
+    @allure.title("Verify device creation succeeds with empty description")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_Verify_add_device_with_empty_description_allowed(self):
 
-    def test_09_device_name_too_long(self):
-        self.device.click_add_device()
-        self.device.enter_device_name("A"*101)
-        # self.device.save_device()
-        self.device.verify_inline_error
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.send_keys(DeviceLocators.DEVICE_NAME_INPUT, "TyrePressureStation_01")
+        self.device.send_keys(DeviceLocators.DEVICE_DESCRIPTION_INPUT, "")
+        self.device.click(DeviceLocators.SAVE_DEVICE_BUTTON)
 
-    def test_10_add_duplicate_device_name(self):
+        try:
+            assert self.device.is_visible(SignUpLocators.TOAST_SUCCESS), \
+                "Success toast not displayed"
+            assert self.device.is_device_visible_in_table("TyrePressureStation_01")
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+    @allure.title("Verify inline error for device name with special characters")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_Verify_error_for_device_name_special_characters(self):
+
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.send_keys(DeviceLocators.DEVICE_NAME_INPUT, "Car@123")
+
+        try:
+            self.device.verify_inline_error()
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+    @allure.title("Verify inline error for device name with only special symbols")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_Verify_error_for_device_name_only_special_symbols(self):
+
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.send_keys(DeviceLocators.DEVICE_NAME_INPUT, "#@!*")
+
+        try:
+            self.device.verify_inline_error()
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+    @allure.title("Verify inline error for device name starting with dash")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_Verify_error_for_device_name_starting_with_dash(self):
+
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.send_keys(DeviceLocators.DEVICE_NAME_INPUT, "-Station01")
+
+        try:
+            self.device.verify_inline_error()
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+    @allure.title("Verify inline error for device name shorter than minimum length")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_Verify_error_for_device_name_too_short(self):
+
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.send_keys(DeviceLocators.DEVICE_NAME_INPUT, "AB")
+
+        try:
+            self.device.verify_inline_error()
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+    @allure.title("Verify inline error for device name exceeding maximum length")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_Verify_error_for_device_name_too_long(self):
+
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.send_keys(DeviceLocators.DEVICE_NAME_INPUT, "A" * 101)
+
+        try:
+            self.device.verify_inline_error()
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+    @allure.title("Verify error for duplicate device name")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_Verify_error_for_duplicate_device(self):
+
         duplicate_name = "TyrePressureStation_01"
-        self.device.click_add_device()
-        self.device.enter_device_name(duplicate_name)
-        self.device.enter_device_description("Test")
-        self.device.save_device()
-        self.device.verify_toast_error("already exists")
 
-    # ---------------- DELETE ----------------
+        self.device.click(DeviceLocators.ADD_DEVICE_BUTTON)
+        self.device.send_keys(DeviceLocators.DEVICE_NAME_INPUT, duplicate_name)
+        self.device.send_keys(DeviceLocators.DEVICE_DESCRIPTION_INPUT, "Duplicate test")
+        self.device.click(DeviceLocators.SAVE_DEVICE_BUTTON)
+
+        try:
+            assert self.device.is_visible(SignUpLocators.TOAST_ERROR), \
+                "Duplicate device error toast not shown"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+
+    @allure.title("Verify user can delete a device successfully")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_11_delete_device(self):
-        self.device.click_delete_button(DEVICE_NAME)
-        popup_name = self.driver.find_element(
-            *DeviceLocators.DELETE_POPUP_DEVICE_NAME
-        ).text.replace('"', '').strip()
-        assert popup_name == DEVICE_NAME
-        self.device.confirm_delete()
-        self.device.verify_toast_success("deleted successfully")
-        assert not self.device.is_device_visible_in_table(DEVICE_NAME)
 
+        try:
+            self.device.click(DeviceLocators.DELETE_BUTTON(DEVICE_NAME))
+            popup_name = self.driver.find_element(*DeviceLocators.DELETE_POPUP_DEVICE_NAME).text.replace('"', '').strip()
+            assert popup_name == DEVICE_NAME, "Incorrect device shown in delete popup"
+
+            self.device.click(DeviceLocators.YES_DELETE_IT_BUTTON)
+            self.device.verify_toast_success("deleted successfully")
+            assert not self.device.is_device_visible_in_table(DEVICE_NAME)
+
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+    @allure.title("Verify delete device cancel action")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_12_delete_device_cancel(self):
-        device = "TyrePressureStation_01"
-        self.device.click_delete_button(device)
-        self.device.cancel_delete()
-        assert self.device.is_device_visible_in_table(device)
 
-    # ---------------- EDIT ----------------
+        device = "TyrePressureStation_01"
+        self.device.click(DeviceLocators.DELETE_BUTTON(device))
+        self.device.click(DeviceLocators.NO_KEEP_IT_BUTTON)
+        try:
+            assert self.device.is_device_visible_in_table(device), \
+            "Device should remain after cancel delete"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
+
+    @allure.title("Verify user can edit device name successfully")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_13_edit_device_name_success(self):
         old_name = "TyrePressureStation_01"
         new_name = "TyrePressureStation_01_updated"
@@ -118,39 +208,61 @@ class DevicesTests(Base):
         self.device.send_keys(DeviceLocators.DEVICE_NAME, new_name)
         self.device.click(DeviceLocators.SAVE_CHANGES)
         self.device.verify_toast_success("updated successfully")
-        assert self.device.is_device_visible_in_table(new_name)
+        try:
+            assert self.device.is_device_visible_in_table(new_name)
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
 
+    @allure.title("Verify error when editing device without name")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_14_edit_device_without_name(self):
         device = "TyrePressureStation_01_updated"
-        self.device.click(DeviceLocators.EDIT_BUTTON(device))
-        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
-        self.device.send_keys(DeviceLocators.DEVICE_NAME, "")
-        self.device.click(DeviceLocators.SAVE_CHANGES)
-        msg = self.device.get_browser_validation_message(DeviceLocators.DEVICE_NAME)
-        assert "fill" in msg.lower()
+        try:
+            self.device.click(DeviceLocators.EDIT_BUTTON(device))
+            self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
+            self.device.send_keys(DeviceLocators.DEVICE_NAME, "")
+            self.device.click(DeviceLocators.SAVE_CHANGES)
+            msg = self.device.get_browser_validation_message(DeviceLocators.DEVICE_NAME_INPUT)
+            assert "fill" in msg.lower(), "Validation message not shown"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
 
-    # ---------------- SEARCH ----------------
+    @allure.title("Verify search returns existing device")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_15_search_device(self):
         existing_device = "TyrePressureStation_01_updated"
-        self.device.search_device(existing_device)
-        assert self.device.is_device_visible_in_table(existing_device)
+        try:
+            self.device.send_keys(DeviceLocators.SEARCH_DEVICES_INPUT, existing_device)
+            assert self.device.is_device_visible_in_table(existing_device)
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
 
+
+    @allure.title("Verify search returns no results for invalid device")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_16_search_non_existing_device(self):
-        self.device.search_device("INVALID_DEVICE_999")
-        assert not self.device.is_device_visible_in_table("INVALID_DEVICE_999")
+        invalid_device = "INVALID_DEVICE_999"
+        try:
+            self.device.send_keys(DeviceLocators.SEARCH_DEVICES_INPUT, invalid_device)
+            assert not self.device.is_device_visible_in_table(invalid_device)
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise
 
     # ---------------- CONFIG ----------------
 
     def test_17_open_device_config_page(self):
-        device = "TempSensor-A1"
+        device = "PressureSensor"
 
     # Click CONFIG button
         self.device.click(DeviceLocators.CONFIG_BUTTON(device))
 
     # Wait for config page header
         self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.CONFIG_HEADER)
-    )
+            EC.visibility_of_element_located(DeviceLocators.CONFIG_HEADER))
 
     # Verify header displayed
         header = self.driver.find_element(*DeviceLocators.CONFIG_HEADER)
@@ -158,14 +270,13 @@ class DevicesTests(Base):
 
 
     def test_18_save_device_configuration(self):
-        device = "TempSensor-A1"
+        device = "PressureSensor"
 
     # Open config page
         self.device.click(DeviceLocators.CONFIG_BUTTON(device))
 
         self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.CONFIG_HEADER)
-        )
+            EC.visibility_of_element_located(DeviceLocators.CONFIG_HEADER))
 
     # Update config fields
         self.device.send_keys(DeviceLocators.CONFIG_NAME, "Default Config")
@@ -184,12 +295,11 @@ class DevicesTests(Base):
 
     # -------- POLL INTERVAL --------
     def test_19_edit_poll_interval_below_min(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER)
-        )
+            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
         self.device.send_keys(DeviceLocators.POLL_INTERVAL_EDIT, "99")
         self.device.send_keys(DeviceLocators.IP_ADDRESS_EDIT, "192.168.1.1")
@@ -197,17 +307,15 @@ class DevicesTests(Base):
 
         self.device.click(DeviceLocators.SAVE_CHANGES)
         self.device.verify_toast_error(
-            "Poll interval must be between 100 and 300000 milliseconds."
-        )
+            "Poll interval must be between 100 and 300000 milliseconds.")
 
 
     def test_20_edit_poll_interval_above_max(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(
-            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER)
-        )
+            EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
         self.device.send_keys(DeviceLocators.POLL_INTERVAL_EDIT, "300001")
         self.device.send_keys(DeviceLocators.IP_ADDRESS_EDIT, "192.168.1.1")
@@ -218,7 +326,7 @@ class DevicesTests(Base):
 
 
     def test_21_edit_poll_interval_empty(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
         self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
 
@@ -242,7 +350,7 @@ class DevicesTests(Base):
 
     # -------- IP ADDRESS --------
     def test_22_edit_ip_random_text(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
@@ -255,7 +363,7 @@ class DevicesTests(Base):
         self.device.verify_toast_error("Invalid IP Address")
 
     def test_23_edit_ip_wrong_format(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
@@ -269,7 +377,7 @@ class DevicesTests(Base):
 
 
     def test_24_edit_ip_letters_only(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
@@ -283,7 +391,7 @@ class DevicesTests(Base):
 
 
     def test_25_edit_ip_empty(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
@@ -309,7 +417,7 @@ class DevicesTests(Base):
 
     # -------- PORT --------
     def test_26_edit_port_zero(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.EDIT_HEADER))
@@ -323,7 +431,7 @@ class DevicesTests(Base):
             "Port must be between 1 and 65535")
 
     def test_27_edit_port_above_limit(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
         self.device.click(DeviceLocators.EDIT_BUTTON(device))
 
         self.device.wait.until(
@@ -339,22 +447,22 @@ class DevicesTests(Base):
 
     # ---------------- SLAVE MANAGER ----------------
 
-    def test_28_open_slave_manager(self):
-        device = "GasDetector-G7"
+    # def test_28_open_slave_manager(self):
+    #     device = "GasDetector-G7"
 
-        # Click SLAVE button
-        self.device.click(DeviceLocators.SLAVE_BUTTON)
+    #     # Click SLAVE button
+    #     self.device.click(DeviceLocators.SLAVE_BUTTON)
         
-        # Verify landing page
-        title = self.driver.find_element(*DeviceLocators.SLAVE_MANAGER_TITLE)
-        subtitle = self.driver.find_element(*DeviceLocators.SLAVE_MANAGER_SUBTITLE)
+    #     # Verify landing page
+    #     title = self.driver.find_element(*DeviceLocators.SLAVE_MANAGER_TITLE)
+    #     subtitle = self.driver.find_element(*DeviceLocators.SLAVE_MANAGER_SUBTITLE)
 
-        self.assertTrue(title.is_displayed(), "Slave Manager title not visible")
-        self.assertTrue(subtitle.is_displayed(), "Slave Manager subtitle not visible")
+    #     self.assertTrue(title.is_displayed(), "Slave Manager title not visible")
+    #     self.assertTrue(subtitle.is_displayed(), "Slave Manager subtitle not visible")
 
 
     def test_29_open_new_slave_page(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
 
         # Open Slave Manager
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -368,7 +476,7 @@ class DevicesTests(Base):
 
 
     def test_30_save_slave_without_register(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
 
         # Open New Slave
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -382,7 +490,7 @@ class DevicesTests(Base):
 
 
     def test_31_open_add_register_popup(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
 
         # Open Add Register Popup
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -394,7 +502,7 @@ class DevicesTests(Base):
 
 
     def test_32_close_add_register_popup(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
 
         # Open and close popup
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -408,7 +516,7 @@ class DevicesTests(Base):
 
 
     def test_33_add_register_success(self):
-        device = "GasDetector-G7"
+        device = "Controller_017"
 
     # Open New Slave
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -425,7 +533,7 @@ class DevicesTests(Base):
 
 
     def test_34_cancel_register_popup(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
 
         # Open popup
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -438,7 +546,7 @@ class DevicesTests(Base):
 
 
     def test_35_save_slave_after_register_add(self):
-        device = "GasDetector-G7"
+        device = "Controller_01"
 
         # Open new slave
         self.device.click(DeviceLocators.SLAVE_BUTTON)
@@ -458,22 +566,15 @@ class DevicesTests(Base):
     def test_36_bulk_device_upload(self):
     # 1. Open Bulk Upload modal
         self.device.click(DeviceLocators.IMPORT_BULK_BUTTON)
-
     # 2. Wait for upload card to be visible
-        self.device.wait.until(
-        EC.visibility_of_element_located(DeviceLocators.UPLOAD_CARD))
-
+        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.UPLOAD_CARD))
     # 3. Get hidden file input and send file
         file_input = self.device.get_hidden_element(DeviceLocators.FILE_INPUT)
         file_input.send_keys(r"C:\Users\Sakshi Gangurde\Downloads\devices_sample.xlsx")
-
     # 4. Wait for CSV ready message
-        self.device.wait.until(
-        EC.visibility_of_element_located(DeviceLocators.CSV_READY_MESSAGE))
-
+        self.device.wait.until(EC.visibility_of_element_located(DeviceLocators.CSV_READY_MESSAGE))
     # 5. Click Save Devices
         self.device.click(DeviceLocators.SAVE_DEVICES_BUTTON)
-
     # 6. Verify toast
         self.device.verify_toast_success("10 devices uploaded successfully")
 

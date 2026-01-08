@@ -10,12 +10,10 @@ from selenium.webdriver.support import expected_conditions as EC
 
 load_dotenv()
 
-
 class SignalTests(Base):
 
     def setUp(self):
         self.driver = super().start_driver()
-
         # -------- Login --------
         login = LoginPage(self.driver)
         login.enter_email(os.environ.get("USER_EMAIL"))

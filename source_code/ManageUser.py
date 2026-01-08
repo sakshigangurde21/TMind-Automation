@@ -45,8 +45,7 @@ class ManageUserTests(Base):
         self.assertEqual(len(rows), 1)
         self.assertEqual(
             rows[0].find_element("xpath", ManageUserLocators.USERNAME_CELL).text.strip(),
-            username
-        )
+            username)
 
     def test_search_non_existing_user(self):
         self.manage_user.search_user("randomuser123")

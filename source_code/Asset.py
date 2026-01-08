@@ -12,24 +12,26 @@ UPDATED_NAME = "Auto_Root_01_Updated"
 CHILD_ASSET_NAME = "Auto_Child_01"
 
 class AssetsTests(Base):
-    def setUp(self):
-        self.driver = super().start_driver()
-
-        login = LoginPage(self.driver)
+    @classmethod
+    def setUpClass(cls):
+        # Start browser once
+        cls.driver = super().start_driver()
+        # Login once
+        login = LoginPage(cls.driver)
         login.enter_email(os.environ.get("USER_EMAIL"))
         login.enter_password(os.environ.get("PASSWORD"))
         login.click_login()
-        assert login.is_dashboard_displayed()
-
-        self.asset = AssetPage(self.driver)
-        self.asset.click(AssetLocators.ASSETS_MENU)
+        assert login.is_dashboard_displayed(), "Login failed"
+        # Navigate to Assets
+        cls.asset = AssetPage(cls.driver)
+        cls.asset.click(AssetLocators.ASSETS_MENU)
 
     # 1 ---------------- OPEN ----------------
     def test_01_open_assets_page(self):
         try:
             self.assertTrue(
                 self.asset.is_visible(AssetLocators.ADD_ROOT_BTN))
-        except Exception as e:
+        except Exception:
             raise AssertionError("Unable to open Assets page")
 
     # 2 ---------------- CREATE ----------------
@@ -40,7 +42,8 @@ class AssetsTests(Base):
             self.asset.click(AssetLocators.ADD_BTN)
 
             self.assertTrue(
-                self.asset.is_visible(AssetLocators.ASSET_NAME_NODE(ASSET_NAME)))
+                self.asset.is_visible(
+                    AssetLocators.ASSET_NAME_NODE(ASSET_NAME)))
         except Exception:
             raise AssertionError("Unable to create root asset")
 
@@ -49,14 +52,16 @@ class AssetsTests(Base):
         try:
             self.asset.send_keys(AssetLocators.SEARCH_INPUT, "Auto")
             self.assertTrue(
-                self.asset.is_visible(AssetLocators.ASSET_NAME_NODE(ASSET_NAME)))
+                self.asset.is_visible(
+                    AssetLocators.ASSET_NAME_NODE(ASSET_NAME)))
         except Exception:
             raise AssertionError("Search asset failed")
 
     # 4 ---------------- PARTIAL SEARCH ----------------
     def test_04_search_partial_match(self):
         try:
-            self.asset.send_keys(AssetLocators.SEARCH_INPUT, "Hydraulic")
+            self.asset.clear_search()   # FIX
+            self.asset.search_asset("Hydraulic")
             self.assertTrue(
                 self.asset.is_visible(
                     AssetLocators.ASSET_NAME_NODE("Hydraulic Press")))
@@ -66,6 +71,7 @@ class AssetsTests(Base):
     # 5 ---------------- ADD CHILD ----------------
     def test_05_add_child_asset(self):
         try:
+            self.asset.clear_search()   # FIX
             self.asset._hover_asset_row(ASSET_NAME)
             self.driver.execute_script(
                 "arguments[0].click();",
@@ -94,7 +100,8 @@ class AssetsTests(Base):
             self.driver.execute_script(
                 "arguments[0].click();",
                 self.asset.get_element(
-                    AssetLocators.EDIT_ICON(ASSET_NAME)))
+                    AssetLocators.EDIT_ICON(ASSET_NAME))
+            )
 
             edit_input = self.asset.get_element(AssetLocators.EDIT_INPUT)
             edit_input.clear()
@@ -104,7 +111,8 @@ class AssetsTests(Base):
 
             self.assertTrue(
                 self.asset.is_visible(
-                    AssetLocators.ASSET_NAME_NODE(UPDATED_NAME)))
+                    AssetLocators.ASSET_NAME_NODE(UPDATED_NAME))
+            )
         except Exception:
             raise AssertionError("Unable to edit asset")
 
@@ -140,19 +148,23 @@ class AssetsTests(Base):
             self.driver.execute_script(
                 "arguments[0].click();",
                 self.asset.get_element(
-                    AssetLocators.EXPAND_BTN(UPDATED_NAME)))
+                    AssetLocators.EXPAND_BTN(UPDATED_NAME))
+            )
 
             self.asset._hover_asset_row(CHILD_ASSET_NAME)
             self.driver.execute_script(
                 "arguments[0].click();",
                 self.asset.get_element(
-                    AssetLocators.DELETE_ICON(CHILD_ASSET_NAME)))
+                    AssetLocators.DELETE_ICON(CHILD_ASSET_NAME))
+            )
 
-            self.asset.click(AssetLocators.CONFIRM_DELETE_BTN)
+            self.asset.click(
+                AssetLocators.CONFIRM_DELETE_BTN)
 
             self.assertFalse(
                 self.asset.is_visible(
-                    AssetLocators.ASSET_NAME_NODE(CHILD_ASSET_NAME)))
+                    AssetLocators.ASSET_NAME_NODE(CHILD_ASSET_NAME))
+            )
         except Exception:
             raise AssertionError("Unable to delete child asset")
 
@@ -163,13 +175,16 @@ class AssetsTests(Base):
             self.driver.execute_script(
                 "arguments[0].click();",
                 self.asset.get_element(
-                    AssetLocators.DELETE_ICON(UPDATED_NAME)))
+                    AssetLocators.DELETE_ICON(UPDATED_NAME))
+            )
 
-            self.asset.click(AssetLocators.CONFIRM_DELETE_BTN)
+            self.asset.click(
+                AssetLocators.CONFIRM_DELETE_BTN)
 
             self.assertFalse(
                 self.asset.is_visible(
-                    AssetLocators.ASSET_NAME_NODE(UPDATED_NAME)))
+                    AssetLocators.ASSET_NAME_NODE(UPDATED_NAME))
+            )
         except Exception:
             raise AssertionError("Unable to delete parent asset")
 
@@ -178,11 +193,13 @@ class AssetsTests(Base):
         try:
             self.asset.click(AssetLocators.ADD_ROOT_BTN)
             self.asset.send_keys(
-                AssetLocators.ASSET_NAME_INPUT, "Hydraulic Press")
+                AssetLocators.ASSET_NAME_INPUT,
+                "Hydraulic Press")
             self.asset.click(AssetLocators.ADD_BTN)
 
             self.assertTrue(
-                self.asset.is_visible(SignUpLocators.INLINE_ERROR))
+                self.asset.is_visible(
+                    SignUpLocators.INLINE_ERROR))
         except Exception:
             raise AssertionError("Duplicate asset validation failed")
 
@@ -191,7 +208,8 @@ class AssetsTests(Base):
         try:
             self.asset.click(AssetLocators.ADD_ROOT_BTN)
             self.assertTrue(
-                self.asset.is_visible(SignUpLocators.INLINE_ERROR))
+                self.asset.is_visible(
+                    SignUpLocators.INLINE_ERROR))
         except Exception:
             raise AssertionError("Empty asset name allowed")
 
@@ -203,7 +221,8 @@ class AssetsTests(Base):
                 AssetLocators.ASSET_NAME_INPUT, "@@###")
 
             self.assertTrue(
-                self.asset.is_visible(SignUpLocators.INLINE_ERROR))
+                self.asset.is_visible(
+                    SignUpLocators.INLINE_ERROR))
         except Exception:
             raise AssertionError("Invalid characters accepted")
 
@@ -215,7 +234,8 @@ class AssetsTests(Base):
                 AssetLocators.ASSET_NAME_INPUT, "A" * 150)
 
             self.assertTrue(
-                self.asset.is_visible(SignUpLocators.INLINE_ERROR))
+                self.asset.is_visible(
+                    SignUpLocators.INLINE_ERROR))
         except Exception:
             raise AssertionError("Long asset name accepted")
 
@@ -225,14 +245,17 @@ class AssetsTests(Base):
             self.driver.execute_script(
                 "arguments[0].click();",
                 self.asset.get_element(
-                    AssetLocators.EXPAND_BTN("Hydraulic Press")))
+                    AssetLocators.EXPAND_BTN("Hydraulic Press"))
+            )
 
             self.assertFalse(
                 self.asset.is_visible(
-                    AssetLocators.DELETE_ICON("Hydraulic Press")))
+                    AssetLocators.DELETE_ICON("Hydraulic Press"))
+            )
             self.assertTrue(
                 self.asset.is_visible(
-                    AssetLocators.DELETE_ICON("Robotic Arm")))
+                    AssetLocators.DELETE_ICON("Robotic Arm"))
+            )
         except Exception:
             raise AssertionError("Delete icon rule validation failed")
 
@@ -259,30 +282,38 @@ class AssetsTests(Base):
                 self.driver.execute_script(
                     "arguments[0].click();",
                     self.asset.get_element(
-                        AssetLocators.ADD_CHILD_ICON(current_parent)))
+                        AssetLocators.ADD_CHILD_ICON(current_parent))
+                )
 
                 self.asset.send_keys(
                     AssetLocators.SUB_ASSET_NAME_INPUT, child_name)
-                self.asset.click(AssetLocators.SUB_ASSET_SAVE_BTN)
+                self.asset.click(
+                    AssetLocators.SUB_ASSET_SAVE_BTN)
 
                 self.asset.expand_path(path)
 
                 self.assertTrue(
                     self.asset.is_visible(
-                        AssetLocators.ASSET_NAME_NODE(child_name)))
+                        AssetLocators.ASSET_NAME_NODE(child_name))
+                )
 
                 path.append(child_name)
                 current_parent = child_name
                 depth += 1
 
             self.assertFalse(
-                self.asset.can_add_child(current_parent))
+                self.asset.can_add_child(current_parent)
+            )
         except Exception:
-            raise AssertionError("Asset hierarchy depth validation failed")
+            raise AssertionError(
+                "Asset hierarchy depth validation failed")
 
     # ---------------- CLEANUP ----------------
-    def tearDown(self):
-        self.quit_driver()
+    # ---------------- CLEANUP ----------------
+    @classmethod
+    def tearDownClass(cls):
+        if cls.driver:
+            cls.driver.quit()
 
 
 if __name__ == "__main__":
