@@ -1,22 +1,22 @@
 import os
 import unittest
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from dotenv import load_dotenv
 import allure
 from datetime import datetime
+
 load_dotenv()
 
 class Base(unittest.TestCase):
     driver = None
-    
+    screenshot_path = None
+
     @classmethod
     def start_driver(cls):
         download_path = os.path.join(os.getcwd(), "Downloads")
 
         cls.screenshot_path = os.path.join(os.getcwd(), "Screenshots")
-        if not os.path.exists(cls.screenshot_path):
-            os.makedirs(cls.screenshot_path)
+        os.makedirs(cls.screenshot_path, exist_ok=True)
 
         chrome_options = webdriver.ChromeOptions()
         prefs = {"download.default_directory": download_path}
@@ -29,28 +29,36 @@ class Base(unittest.TestCase):
 
         cls.driver = webdriver.Chrome(options=chrome_options)
         cls.driver.maximize_window()
-        cls.driver.get(os.environ.get("BASE_URL"))
-
+        # cls.driver.get(os.environ.get("BASE_URL"))
         return cls.driver
-    
+
     def attach_screenshot(self, suffix=""):
         try:
-            if self.driver and self.driver.session_id:
+            driver = self.__class__.driver
+            if driver and driver.session_id:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 test_name = self._testMethodName
                 screenshot_name = f"{test_name}{suffix}_{timestamp}.png"
-                screenshot_file = os.path.join(self.screenshot_path, screenshot_name)
-                self.driver.save_screenshot(screenshot_file)          # Take screenshot
-                allure.attach.file(screenshot_file, name=screenshot_name, attachment_type=allure.attachment_type.PNG)     # Attach to Allure report
-                print(f"Screenshot saved: {screenshot_file}")
+                screenshot_file = os.path.join(
+                    self.__class__.screenshot_path, screenshot_name
+                )
+
+                driver.save_screenshot(screenshot_file)
+                allure.attach.file(
+                    screenshot_file,
+                    name=screenshot_name,
+                    attachment_type=allure.attachment_type.PNG
+                )
                 return screenshot_file
         except Exception as e:
-            print(f"Failed to capture screenshot: {str(e)}")
+            print(f"Screenshot capture failed: {e}")
         return None
-    
-    def quit_driver(self):
-        if self.driver:
+
+    @classmethod
+    def quit_driver(cls):
+        if cls.driver:
             try:
-                self.driver.quit()
+                cls.driver.quit()
+                cls.driver = None
             except Exception as e:
-                print(f"Error while quitting driver: {str(e)}")
+                print(f"Error quitting driver: {e}")

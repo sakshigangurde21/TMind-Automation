@@ -1,1 +1,0 @@
-ERROR TOAST: Poll interval must be between 100 and 300000 milliseconds.

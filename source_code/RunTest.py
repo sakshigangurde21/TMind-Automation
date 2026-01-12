@@ -11,12 +11,12 @@ def suite():
     suite = unittest.TestSuite()
 
     suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(LoginTests))
-    # suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(SignUpTests))
-    # suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(SignalTests))
-    # suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(AssetsTests))
-    # suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(DevicesTests))
-    # suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(ManageUserTests))
-    # suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(TourTests))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(SignUpTests))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(AssetsTests))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(DevicesTests))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(ManageUserTests))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(SignalTests))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(TourTests))
    
     return suite
 

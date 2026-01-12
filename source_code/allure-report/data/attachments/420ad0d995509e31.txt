@@ -1,1 +1,0 @@
-ERROR TOAST: Cannot save slave with no registers

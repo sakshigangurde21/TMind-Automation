@@ -1,106 +1,155 @@
 import os
-import time
 import unittest
+import allure
+import time
 from Base import Base
-from Page import LoginPage, SignalPage
+from Page import LoginPage, AssetPage, SignalPage
 from locators import SignalLocators
 from dotenv import load_dotenv
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
 
 load_dotenv()
 
 class SignalTests(Base):
 
-    def setUp(self):
-        self.driver = super().start_driver()
-        # -------- Login --------
-        login = LoginPage(self.driver)
+    @classmethod
+    def setUpClass(cls):
+        cls.driver = super().start_driver()
+
+        login = LoginPage(cls.driver)
         login.enter_email(os.environ.get("USER_EMAIL"))
         login.enter_password(os.environ.get("PASSWORD"))
         login.click_login()
-        assert login.is_dashboard_displayed()
+        assert login.is_dashboard_displayed(), "Login failed"
+        cls.signal = SignalPage(cls.driver)
+        # ---------- OPEN SIGNAL MODULE ----------
+        cls.signal.click(SignalLocators.SIGNAL_MENU)
+    # 1 ---------------- OPEN ----------------
+    @allure.title("Verify Signal module opens successfully")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_01_open_signal_module(self):
+        try:
+            assert self.signal.is_visible(SignalLocators.TIME_RANGE_DROPDOWN)
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Signal module did not open")
 
-        # -------- Open Signal Page --------
-        self.signal = SignalPage(self.driver)
-        self.signal.open_signal_page()   # assume this navigation method exists
-
-    # ---------------- PAGE LOAD ----------------
-    def test_open_signal_page(self):
-        """Verify Signal page loads properly"""
-        graph_card = self.signal.get_element(SignalLocators.SIGNAL_GRAPH_CARD)
-        self.assertTrue(graph_card.is_displayed())
-
-    # ---------------- MAIN ASSET ----------------
-    def test_select_main_asset(self):
-        """Verify main asset selection works"""
-        self.signal.select_main_asset("bullll (Level 3)")
-        device = self.signal.get_assigned_device_name()
-        self.assertIsNotNone(device)
-
-    # ---------------- ASSIGNED DEVICE ----------------
-    def test_asset_without_device_shows_not_assigned(self):
-        """Verify asset without device shows 'Not Assigned'"""
-        self.signal.select_main_asset("Valve B (Level 3)")
-        device = self.signal.get_assigned_device_name()
-        self.assertIn("Not Assigned", device)
-
-    # ---------------- SIGNAL VISIBILITY ----------------
-    def test_no_device_no_signals(self):
-        """Verify no signals shown when no device is assigned"""
-        self.signal.select_main_asset("Valve B (Level 3)")
-        self.assertTrue(
-            self.signal.is_no_signals_displayed(),
-            "No signals message should be displayed"
+    # 2 ---------------- TIME RANGE ----------------
+    @allure.title("Verify Time Range dropdown is visible and enabled")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_02_time_range_dropdown_enabled(self):
+        try:
+            dropdown = self.signal.get_element(
+                SignalLocators.TIME_RANGE_DROPDOWN
+            )
+            time.sleep(1)
+            assert dropdown.is_displayed(), "Time Range dropdown not visible"
+            assert dropdown.is_enabled(), "Time Range dropdown disabled"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Time Range dropdown validation failed")
+        
+# 8 ---------------- TIME RANGE SELECTION ----------------
+    @allure.title("Verify user can select Time Range value")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_03_select_time_range_value(self):
+        try:
+            dropdown_element = self.signal.get_element(
+            SignalLocators.TIME_RANGE_DROPDOWN
         )
 
-    # ---------------- GRAPH ----------------
-    def test_graph_empty_state(self):
-        """Verify graph shows empty state when no signals exist"""
-        self.signal.select_main_asset("Valve B (Level 3)")
-        self.assertTrue(
-            self.signal.is_graph_empty(),
-            "Graph should show 'No data available'"
-        )
+            select = Select(dropdown_element)
+            select.select_by_value("7d")  # Last 7 Days
 
-    def test_graph_visible_for_asset_with_signals(self):
-        """Verify graph is visible when signals exist"""
-        self.signal.select_main_asset("bullll (Level 3)")
-        self.assertTrue(
-            self.signal.is_graph_visible(),
-            "Signal graph should be visible"
-        )
+            time.sleep(1)
 
-    # ---------------- COMPARE ASSET ----------------
-    def test_select_compare_asset(self):
-        """Verify compare asset dropdown works"""
-        self.signal.select_main_asset("bullll (Level 3)")
-        self.signal.select_compare_asset("charger (Level 4)")
-        self.assertTrue(self.signal.is_graph_visible())
+            selected_option = select.first_selected_option.text
+            assert selected_option == "Last 7 Days", \
+            f"Expected 'Last 7 Days' but got '{selected_option}'"
 
-    # ---------------- DATA CONSISTENCY ----------------
-    def test_device_signal_consistency(self):
-        """
-        If device is not assigned,
-        signals should not be displayed
-        """
-        self.signal.select_main_asset("Valve B (Level 3)")
-        self.signal.verify_device_and_signal_consistency()
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Time Range selection failed")
 
-    def test_signals_change_when_asset_changes(self):
-        self.signal.select_main_asset("bullll (Level 3)")
-        signals_1 = self.signal.get_signals_text()
+    # 3 ---------------- MAIN ASSET ----------------
+    @allure.title("Verify Main Asset dropdown is clickable")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_04_main_asset_dropdown_clickable(self):
+        try:
+            asset_dropdown = self.signal.get_element(
+                SignalLocators.MAIN_ASSET_DROPDOWN
+            )
+            asset_dropdown.click()
+            time.sleep(1)
+            assert asset_dropdown.is_enabled(), "Main Asset dropdown disabled"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Main Asset dropdown not clickable")
 
-        self.signal.select_main_asset("Auto Welding Line (Level 3)")
-        signals_2 = self.signal.get_signals_text()
+    # 4 ---------------- SIGNAL BUTTON ----------------
+    @allure.title("Verify Signals button is disabled by default")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_05_signals_button_disabled_by_default(self):
+        try:
+            signals_btn = self.signal.get_element(
+                SignalLocators.SIGNALS_BUTTON
+            )
+            time.sleep(1)
+            assert not signals_btn.is_enabled(), \
+                "Signals button should be disabled initially"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Signals button state validation failed")
 
-        self.assertNotEqual(
-            signals_1,
-            signals_2,
-            "Signals did not change after asset switch")
+    # 5 ---------------- ASSIGNED DEVICE ----------------
+    @allure.title("Verify Assigned Device shows Not Assigned")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_06_assigned_device_not_assigned(self):
+        try:
+            device_text = self.signal.get_text(
+                SignalLocators.ASSIGNED_DEVICE_VALUE
+            )
+            time.sleep(1)
+            assert "Not Assigned" in device_text, \
+                "Assigned device text incorrect"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Assigned Device validation failed")
 
-    def tearDown(self):
-        self.quit_driver()
+    # 6 ---------------- COMPARE ASSET ----------------
+    @allure.title("Verify Compare Asset dropdown is disabled initially")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_07_compare_asset_dropdown_disabled(self):
+        try:
+            compare_dropdown = self.signal.get_element(
+                SignalLocators.COMPARE_ASSET_DROPDOWN
+            )
+            assert not compare_dropdown.is_enabled(), \
+                "Compare Asset dropdown should be disabled"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Compare Asset dropdown validation failed")
+
+    # 7 ---------------- GRAPH EMPTY STATE ----------------
+    @allure.title("Verify No data available message shown in Signals Graph")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_08_no_data_message_in_graph(self):
+        try:
+            no_data_text = self.signal.get_text(
+                SignalLocators.GRAPH_NO_DATA_TEXT
+            )
+            assert "No data available" in no_data_text, \
+                "No data message not displayed"
+        except AssertionError:
+            self.attach_screenshot("_failure")
+            raise AssertionError("Signals graph empty state validation failed")
+
+    # ---------------- CLEANUP ----------------
+    @classmethod
+    def tearDownClass(cls):
+        if cls.driver:
+            cls.driver.quit()
+
 
 if __name__ == "__main__":
     unittest.main()

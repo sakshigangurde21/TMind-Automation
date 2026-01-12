@@ -38,8 +38,7 @@ class LoginTests(Base):
         self.login.click(LoginLocators.LOGIN_BUTTON)
         time.sleep(2)
         try:
-            assert self.login.is_visible(LoginLocators.TOAST_ERROR), \
-                "Error message not shown for invalid login"
+            assert self.login.is_visible(LoginLocators.TOAST_ERROR), "Error message not shown for invalid login"
         except AssertionError:
             self.attach_screenshot("_failure")
             raise
@@ -90,8 +89,7 @@ class LoginTests(Base):
         self.login.click(LoginLocators.LOGIN_BUTTON)
         time.sleep(2)
         try:
-            assert self.login.is_visible(LoginLocators.TOAST_ERROR), \
-                "Short password validation failed"
+            assert self.login.is_visible(LoginLocators.TOAST_ERROR), "Short password validation failed"
         except AssertionError:
             self.attach_screenshot("_failure")
             raise
@@ -107,8 +105,7 @@ class LoginTests(Base):
         self.login.click(LoginLocators.LOGOUT_BUTTON)
         time.sleep(2)
         try:
-            assert self.login.is_visible(LoginLocators.LOGIN_BUTTON), \
-                "Logout failed"
+            assert self.login.is_visible(LoginLocators.LOGIN_BUTTON), "Logout failed"
         except AssertionError:
             self.attach_screenshot("_failure")
             raise
@@ -125,8 +122,7 @@ class LoginTests(Base):
         self.driver.back()
         time.sleep(2)
         try:
-            assert self.login.is_visible(LoginLocators.PROFILE_ICON), \
-                "User logged out after browser back"
+            assert self.login.is_visible(LoginLocators.PROFILE_ICON), "User logged out after browser back"
         except AssertionError:
             self.attach_screenshot("_failure")
             raise

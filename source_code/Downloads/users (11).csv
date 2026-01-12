@@ -1,0 +1,8 @@
+username,email,role
+"admin","admin@example.com","Admin"
+"Tom","Tom123@gmail.com","Operator"
+"Sakshi","sakshi.gangurde@wonderbiz.in","Admin"
+"exuser","exuser@gmail.com","Engineer"
+"Zill","zill@example.com","User"
+"Will","Will@example.com","User"
+"newuser123","new123@test.com","User"

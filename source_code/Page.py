@@ -7,6 +7,7 @@ import time
 import unittest
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.keys import Keys
 
 class BasePage:
     """Reusable methods for all pages"""
@@ -21,6 +22,19 @@ class BasePage:
         elem = self.wait.until(EC.visibility_of_element_located(locator))
         elem.clear()
         elem.send_keys(text)
+
+    def get_text(self, locator) -> str:
+        element = self.driver.find_element(*locator)
+        return element.text
+    
+    def reset_search(self):
+        search = self.wait.until(
+        EC.visibility_of_element_located(DeviceLocators.SEARCH_DEVICES_INPUT))
+        search.click()
+        search.send_keys(Keys.CONTROL, "a")
+        search.send_keys(Keys.DELETE)
+        search.send_keys(Keys.SPACE)
+        search.send_keys(Keys.BACKSPACE)
 
     def get_element(self, locator):
         return self.wait.until(EC.visibility_of_element_located(locator))
@@ -68,10 +82,20 @@ class BasePage:
             EC.visibility_of_element_located(locator))
         assert expected_text in toast.text, f"Expected '{expected_text}', got '{toast.text}'"
 
-    def verify_inline_error(self, locator):
-        self.wait.until(
-            EC.visibility_of_element_located(locator))
+    def wait_for_toast_disappear(self):
+        try:
+            WebDriverWait(self.driver, 5).until(EC.invisibility_of_element_located(SignUpLocators.TOAST_ERROR))
+        except:
+            pass
+
+
+    # def verify_inline_error(self, locator):
+    #     self.wait.until(
+    #         EC.visibility_of_element_located(locator))
         
+    def verify_inline_error(self, locator=SignUpLocators.INLINE_ERROR):
+        self.wait.until(EC.visibility_of_element_located(locator))
+
     # def clear_search(self):
     #     search = self.wait.until(
     #         EC.visibility_of_element_located(AssetLocators.SEARCH_INPUT))
@@ -146,7 +170,6 @@ class SignUpPage(BasePage):
             return True
         except:
             return False
-
   
     def is_error_message_displayed(self):
         return len(self.driver.find_elements(*SignUpLocators.ERROR_MESSAGES)) > 0
@@ -181,6 +204,23 @@ class AssetPage(BasePage):
         except: 
             return False
         
+    def reset_search(self):
+        search = self.wait.until(
+        EC.visibility_of_element_located(AssetLocators.SEARCH_INPUT))
+        search.click()
+        search.send_keys(Keys.CONTROL, "a")
+        search.send_keys(Keys.DELETE)
+        search.send_keys(Keys.SPACE)
+        search.send_keys(Keys.BACKSPACE)
+
+    def reset_add_asset(self):
+        search = self.wait.until(
+        EC.visibility_of_element_located(AssetLocators.ASSET_NAME_INPUT))
+        search.click()
+        search.send_keys(Keys.CONTROL, "a")
+        search.send_keys(Keys.DELETE)
+        search.send_keys(Keys.SPACE)
+        search.send_keys(Keys.BACKSPACE)
     # ---------- INTERNAL COMMON HELPERS ----------
     def _hover_asset_row(self, name):
         """Hover full asset ROW (not only the text span)"""
@@ -227,29 +267,38 @@ class DevicePage(BasePage):
     def go_to_devices(self):
         self.wait.until(EC.element_to_be_clickable(DeviceLocators.SIDE_PANEL_DEVICES)).click()
         self.wait.until(EC.visibility_of_element_located(DeviceLocators.ADD_DEVICE_BUTTON))
+   
+    def close_any_device_modal_if_open(self):
+        try:
+        # 1️⃣ Add Device modal
+            if self.is_visible(DeviceLocators.CANCEL_DEVICE_BUTTON, timeout=2):
+                self.click(DeviceLocators.CANCEL_DEVICE_BUTTON)
+                self.wait.until(
+                    EC.invisibility_of_element_located(
+                        DeviceLocators.CANCEL_DEVICE_BUTTON
+                )
+            )
 
-    # ---------------- Add Device ----------------
-    def click_add_device(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.ADD_DEVICE_BUTTON)).click()
-        self.wait.until(EC.visibility_of_element_located(DeviceLocators.DEVICE_NAME_INPUT))
+        # 2️⃣ Edit Device modal
+            elif self.is_visible(DeviceLocators.BACK_TO_DEVICES, timeout=2):
+                self.click(DeviceLocators.BACK_TO_DEVICES)
+                self.wait.until(
+                    EC.invisibility_of_element_located(
+                    DeviceLocators.BACK_TO_DEVICES
+                )
+            )
 
-    def enter_device_name(self, name):
-        field = self.wait.until(EC.visibility_of_element_located(DeviceLocators.DEVICE_NAME_INPUT))
-        field.clear()
-        field.send_keys(name)
+        # 3️⃣ Config page
+            elif self.is_visible(DeviceLocators.BACK_CONFIG, timeout=2):
+                self.click(DeviceLocators.BACK_CONFIG)
+                self.wait.until(
+                    EC.invisibility_of_element_located(
+                        DeviceLocators.BACK_CONFIG
+                )
+            )
+        except Exception:
+            pass  # Safe state → nothing open
 
-    def enter_device_description(self, description):
-        field = self.wait.until(EC.visibility_of_element_located(DeviceLocators.DEVICE_DESCRIPTION_INPUT))
-        field.clear()
-        field.send_keys(description)
-
-    def save_device(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.SAVE_DEVICE_BUTTON)).click()
-
-    def cancel_device_creation(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.CANCEL_DEVICE_BUTTON)).click()
-        # Wait until modal disappears
-        self.wait.until(EC.invisibility_of_element_located(DeviceLocators.CANCEL_DEVICE_BUTTON))
 
     # ---------------- Toast Verifications ----------------
     def verify_toast_success(self, expected_text):
@@ -280,122 +329,10 @@ class DevicePage(BasePage):
         except:
             return False
 
-    # ---------------- Delete Device ----------------
-    def click_delete_button(self, device_name):
-        btn = self.wait.until(EC.element_to_be_clickable(DeviceLocators.DELETE_BUTTON(device_name)))
-        btn.click()
-        # Wait for confirmation popup
-        self.wait.until(EC.visibility_of_element_located(DeviceLocators.CONFIRM_DELETION_TITLE))
-
-    def confirm_delete(self):
-        btn = self.wait.until(EC.element_to_be_clickable(DeviceLocators.YES_DELETE_IT_BUTTON))
-        btn.click()
-        self.wait.until(EC.invisibility_of_element_located(DeviceLocators.CONFIRM_DELETION_TITLE))
-
-    def cancel_delete(self):
-        btn = self.wait.until(EC.element_to_be_clickable(DeviceLocators.NO_KEEP_IT_BUTTON))
-        btn.click()
-        self.wait.until(EC.invisibility_of_element_located(DeviceLocators.CONFIRM_DELETION_TITLE))
-
-    # ---------------- Slave Manager ----------------
-
-    def open_slave_manager(self):
-        """Click Slave button inside Device details page."""
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.SLAVE_BUTTON)).click()
-        self.wait.until(EC.visibility_of_element_located(DeviceLocators.SLAVE_MANAGER_TITLE))
-        self.wait.until(EC.visibility_of_element_located(DeviceLocators.SLAVE_MANAGER_SUBTITLE))
-
-    def click_new_slave(self):
-        """Opens empty slave config page."""
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.NEW_SLAVE_BUTTON)).click()
-        self.wait.until(EC.visibility_of_element_located(DeviceLocators.SLAVE_HEADER))
-
-    def save_slave(self):
-        """Click Save Slave button."""
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.SAVE_SLAVE_BTN)).click()
-
-    def verify_no_registers_popup(self):
-        """Verify popup when trying to save with no registers."""
-        popup = self.wait.until(EC.visibility_of_element_located(
-            (By.XPATH, "//div[contains(., 'Cannot save slave with no registers')]")
-        ))
-        assert popup.is_displayed()
-
-    # ---------------- Register Popup ----------------
-
-    def open_add_register_popup(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.ADD_REGISTER_BTN)).click()
-        self.wait.until(EC.visibility_of_element_located(DeviceLocators.ADD_REG_POPUP))
-
-    def close_add_register_popup(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.CLOSE_POPUP)).click()
-        self.wait.until(EC.invisibility_of_element_located(DeviceLocators.ADD_REG_POPUP))
-
-    # ---------------- Fill Register Form ----------------
-
-    def select_register_type(self, value):
-        """value = option text e.g. 'Holding Register (4xxxx)'"""
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.REGISTER_TYPE)).click()
-        option = (By.XPATH, f"//div[@role='option' and normalize-space()='{value}']")
-        self.wait.until(EC.element_to_be_clickable(option)).click()
-
-    def select_signal(self, value):
-        """value e.g. '0001 — Voltage' """
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.SIGNAL_DROPDOWN)).click()
-        option = (By.XPATH, f"//div[@role='option' and contains(normalize-space(), '{value}')]")
-        self.wait.until(EC.element_to_be_clickable(option)).click()
-
-    def enter_display_address(self, address):
-        self.send_keys(DeviceLocators.DISPLAY_ADDRESS, address)
-
-    def enter_register_length(self, length):
-        self.send_keys(DeviceLocators.REG_LENGTH, length)
-
-    def select_data_type(self, dtype):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.DATA_TYPE)).click()
-        option = (By.XPATH, f"//div[@role='option' and normalize-space()='{dtype}']")
-        self.wait.until(EC.element_to_be_clickable(option)).click()
-
-    def enter_scale(self, value):
-        self.send_keys(DeviceLocators.SCALE, value)
-
-    def select_unit(self, unit_text):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.UNIT)).click()
-        option = (By.XPATH, f"//div[@role='option' and contains(normalize-space(), '{unit_text}')]")
-        self.wait.until(EC.element_to_be_clickable(option)).click()
-
-    def select_byte_order(self, value):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.BYTE_ORDER)).click()
-        option = (By.XPATH, f"//div[@role='option' and contains(normalize-space(), '{value}')]")
-        self.wait.until(EC.element_to_be_clickable(option)).click()
-
-    def toggle_word_swap(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.WORD_SWAP)).click()
-
-    def toggle_healthy_flag(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.HEALTHY_CHK)).click()
-
-    # ---------------- Save Register ----------------
-
-    def save_register_popup(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.POPUP_SAVE)).click()
-
-    def cancel_register_popup(self):
-        self.wait.until(EC.element_to_be_clickable(DeviceLocators.POPUP_CANCEL)).click()
-
-    def verify_register_added_locally(self):
-        """Toast message: REGISTER ADDED LOCALLY ... PLEASE SAVE TO PERSIST"""
-        msg = self.get_toast_message()
-        assert "REGISTER ADDED LOCALLY" in msg.upper()
-
-    # ---------------- After Register Added ----------------
-
     def verify_register_row_visible(self, address):
         """Verify register appears in table after popup save."""
         row = (By.XPATH, f"//td[normalize-space()='{address}']")
         self.wait.until(EC.visibility_of_element_located(row))
-
-
 
 
 
@@ -425,6 +362,14 @@ class ManageUserPage(BasePage):
         select = Select(dropdown)
         return select.first_selected_option.text.strip()
 
+    def reset_search(self):
+        search = self.wait.until(
+        EC.visibility_of_element_located(ManageUserLocators.SEARCH_USER_INPUT))
+        search.click()
+        search.send_keys(Keys.CONTROL, "a")
+        search.send_keys(Keys.DELETE)
+        search.send_keys(Keys.SPACE)
+        search.send_keys(Keys.BACKSPACE)
 
     # ---------------- Table Rows ----------------
     def get_all_user_rows(self):

@@ -96,6 +96,47 @@ class AssetLocators:
     SUB_ASSETS = (By.XPATH, "//p[contains(text(),'Sub Assets:')]//span")
 
 
+    # Configure Signals button (SVG) INSIDE specific asset
+    CONFIGURE_SIGNALS_BTN = (
+    By.XPATH,
+    "(//div[.//text()[normalize-space()='Root_1_Child_Child_Child_Child']]//button[.//*[name()='svg' and contains(@class,'lucide-signal')]])[2]"
+)
+
+
+    AVAILABLE_SIGNALS_TABLE = (
+        By.XPATH,
+        "//p[text()='Available signals (click to add)']/following::table[1]")
+
+    # Signal row by name
+    SIGNAL_ROW = (
+        By.XPATH,
+        "//tr[td[normalize-space()='Voltage']]"
+    )
+
+    # Add button for specific signal
+    ADD_SIGNAL_BTN = (
+        By.XPATH,
+        "//tr[td[normalize-space()='Voltage']]//button[normalize-space()='Add']"
+    )
+
+    RESET_STAGING_BTN = (By.XPATH, "//button[normalize-space()='Reset Staging']")
+    SAVE_ALL_CHANGES_BTN = (By.XPATH, "//button[normalize-space()='Save all changes']")
+    CANCEL_BTN = (By.XPATH, "//button[normalize-space()='Cancel']")
+
+    SAVE_SUCCESS_TOAST = (By.XPATH, "//div[contains(text(),'Saved changes')]")
+    MANAGE_CONNECTION_BTN = (By.XPATH, "//button[normalize-space()='Manage Connection']")
+
+    MAP_BTN = (By.XPATH, "//button[normalize-space()='Map']")
+
+    REGISTER_40001_CHECKBOX = (
+    By.XPATH,
+    "//div[@role='dialog']//div[.//div[text()='40001']]//button[@role='checkbox']"
+)
+
+    MAP_SELECTED_BTN = (By.XPATH, "//button[normalize-space()='Map Selected' and not(@disabled)]")
+    MAP_DISABLED_BTN = (By.XPATH, "//button[normalize-space()='Map Selected' and @disabled]")
+
+
 class DeviceLocators:
     SIDE_PANEL_DEVICES = (By.XPATH, "//a[.//span[text()='Devices']]")
     ADD_DEVICE_BUTTON = (By.XPATH, "//button[contains(text(), '+ Add Device')]")
@@ -156,7 +197,13 @@ class DeviceLocators:
 
 # slave
 
-    SLAVE_BUTTON = (By.XPATH, "//button[contains(@class,'slave-device-btn') and normalize-space()='Slave']")
+    @staticmethod
+    def SLAVE_BUTTON(device_name):
+        return (
+        By.XPATH,
+        f"//tr[td[normalize-space()='{device_name}']]"
+        "//span[contains(@class,'slave-device-btn') and normalize-space()='Slave']/ancestor::button"
+    )
 
     SLAVE_MANAGER_TITLE = (By.XPATH, "//h1[normalize-space()='Slave Manager']")
     SLAVE_MANAGER_SUBTITLE = (By.XPATH, "//p[normalize-space()='Modbus Slave / Registers Configuration']")
@@ -206,9 +253,8 @@ class DeviceLocators:
     CHOOSE_FILE_BUTTON = (By.XPATH, "//button[contains(text(),'Choose file')]")
     CLEAR_FILE_BUTTON = (By.XPATH, "//button[contains(text(),'Clear')]")
     SAVE_DEVICES_BUTTON = (By.XPATH, "//button[contains(text(),'Save Devices')]")
-    CSV_READY_MESSAGE = (By.XPATH, "//div[contains(text(),'CSV is ready to upload')]")
-    UPLOAD_SUCCESS_TOAST = (By.XPATH, "//div[contains(text(),'uploaded successfully')]")
-
+    CSV_READY_MESSAGE = (By.XPATH, "//div[contains(text(),'ready to upload')]")
+    UPLOAD_SUCCESS_TOAST = (By.XPATH, "//div[contains(text(),'Device bulk upload completed')]")
 
 class ManageUserLocators:
     # Sidebar link
@@ -239,7 +285,7 @@ class ManageUserLocators:
     DELETE_MODAL_HEADER = (By.XPATH, "//h2[contains(text(),'Confirm Delete')]")
     DELETE_MODAL_USERNAME = (By.XPATH, "//p[contains(text(),'Are you sure you want to delete')]/span")
     DELETE_MODAL_CANCEL_BUTTON = (By.XPATH, "//button[text()='Cancel']")
-    DELETE_MODAL_CONFIRM_BUTTON = (By.XPATH, "//div[@class='flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 flex w-full justify-between pt-4']//button[normalize-space(text())='Delete']")
+    DELETE_MODAL_CONFIRM_BUTTON = (By.XPATH, "//button[contains(normalize-space(.), 'Delete')]")
 
     PREVIOUS_PAGE_BUTTON = (By.XPATH, "//a[@aria-label='Go to previous page']")
     NEXT_PAGE_BUTTON = (By.XPATH, "//a[@aria-label='Go to next page']")
@@ -253,63 +299,47 @@ class ManageUserLocators:
 
 
 
+
+    
+
 class SignalLocators:
 
     SIGNAL_MENU = (By.ID, "sidebar-signal")
-    # ---------- Time Range ----------
+    # Time Range dropdown
     TIME_RANGE_DROPDOWN = (
-        By.XPATH, "//select[contains(@class,'tour-time-range')]"
+        By.XPATH,
+        "//div[contains(@class,'tour-time-range')]//select"
     )
 
-    # ---------- Main Asset Section ----------
-    MAIN_ASSET_CARD = (
-        By.XPATH, "//div[contains(@class,'tour-main-asset-card')]"
-    )
-
+    # Main Asset dropdown
     MAIN_ASSET_DROPDOWN = (
-        By.XPATH, "//select[contains(@class,'tour-main-asset-dropdown')]"
-    )
-
-    # Assigned Device badge (e.g. Not Assigned / Device Name)
-    ASSIGNED_DEVICE_BADGE = (
         By.XPATH,
-        "//div[contains(@class,'tour-main-device')]//span[contains(@class,'rounded-full')]"
+        "//select[contains(@class,'tour-main-asset-dropdown')]"
     )
 
-    # ---------- Signals (Main Asset) ----------
-    MAIN_SIGNALS_CONTAINER = (
-        By.XPATH, "//div[contains(@class,'tour-main-signals')]"
-    )
-
-    NO_SIGNALS_TEXT = (
+    # Signals button
+    SIGNALS_BUTTON = (
         By.XPATH,
-        "//div[contains(@class,'tour-main-signals')]//span[contains(text(),'No signals')]"
+        "//label[contains(text(),'Signals')]/following::button[1]"
     )
 
-    # ---------- Compare Asset Section ----------
-    COMPARE_ASSET_CARD = (
-        By.XPATH, "//div[contains(@class,'tour-compare-card')]"
+    # Assigned Device value text
+    ASSIGNED_DEVICE_VALUE = (
+        By.XPATH,
+        "//label[contains(@class,'tour-main-device')]/following-sibling::p/span"
     )
 
+    # Compare Asset dropdown
     COMPARE_ASSET_DROPDOWN = (
-        By.XPATH, "//select[contains(@class,'tour-compare-dropdown')]"
+        By.XPATH,
+        "//select[contains(@class,'tour-compare-dropdown')]"
     )
 
-    # ---------- Graph Section ----------
-    SIGNAL_GRAPH_CARD = (
-        By.XPATH, "//div[contains(@class,'tour-graph-card')]"
-    )
-
+    # Signals graph empty state text
     GRAPH_NO_DATA_TEXT = (
         By.XPATH,
-        "//div[contains(@class,'tour-graph-card')]//span[contains(text(),'No data')]"
-    )
-
-    # Graph container (height based – optional)
-    GRAPH_CONTAINER = (
-        By.XPATH, "//div[@style='height: 360px;']"
-    )
-
+        "//div[contains(@class,'tour-graph-card')]//p[contains(text(),'No data available')]"
+    )    
 
 
 # User Guide / Dashboard Tour Locators
@@ -328,3 +358,8 @@ class TourLocators:
     NEXT_BTN = (By.XPATH, "//button[contains(@class,'driver-popover-next-btn')]")
     PREV_BTN = (By.XPATH, "//button[contains(@class,'driver-popover-prev-btn')]")
     CLOSE_BTN = (By.XPATH, "//button[contains(@class,'driver-popover-close-btn')]")
+
+
+class ReportsLocators:
+
+    REPORTS_MENU = (By.ID, "sidebar-reports")

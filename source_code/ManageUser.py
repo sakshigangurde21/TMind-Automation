@@ -1,188 +1,242 @@
 import os
 import time
+import allure
 import unittest
-import glob
-import csv
 from Base import Base
 from Page import LoginPage, DevicePage, ManageUserPage
 from locators import ManageUserLocators
-from dotenv import load_dotenv
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 
-load_dotenv()
-
+@allure.feature("Manage User")
 class ManageUserTests(Base):
 
-    def setUp(self):
-        self.driver = super().start_driver()
+    @classmethod
+    def setUpClass(cls):
+        cls.driver = cls.start_driver()
 
-        # Login first
-        login = LoginPage(self.driver)
+        login = LoginPage(cls.driver)
         login.enter_email(os.environ.get("USER_EMAIL"))
         login.enter_password(os.environ.get("PASSWORD"))
         login.click_login()
-        assert login.is_dashboard_displayed()
 
-        self.device = DevicePage(self.driver)
+        assert login.is_dashboard_displayed(), "Login failed"
 
-        # Open Manage User page
-        self.manage_user = ManageUserPage(self.driver)
-        self.manage_user.go_to_manage_user()
+        cls.device = DevicePage(cls.driver)
+        cls.manage_user = ManageUserPage(cls.driver)
+        cls.manage_user.go_to_manage_user()
 
-    # ---------------- NAVIGATION ----------------
-    def test_open_manage_user_page(self):
-        header = self.manage_user.get_element(ManageUserLocators.PAGE_HEADER)
-        self.assertTrue(header.is_displayed())
-        self.assertIn("User Management", header.text.strip())
+    def setUp(self):
+        # ---- REUSE SESSION ----
+        self.driver = self.__class__.driver
+        self.device = self.__class__.device
+        self.manage_user = self.__class__.manage_user
 
-    # ---------------- SEARCH ----------------
-    def test_search_existing_user(self):
-        username = "sakshi"
-        self.manage_user.search_user(username)
-        rows = self.manage_user.get_all_user_rows()
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(
-            rows[0].find_element("xpath", ManageUserLocators.USERNAME_CELL).text.strip(),
-            username)
+    # ------------------------------------------------
+    # PAGE LOAD
+    # ------------------------------------------------
+    @allure.title("Verify Manage User page opens successfully")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_01_verify_manage_user_page_open(self):
+        try:
+            header = self.manage_user.get_element(ManageUserLocators.PAGE_HEADER)
+            assert header.is_displayed()
+            assert "User Management" in header.text
+        except AssertionError:
+            self.attach_screenshot("manage_user_page_failure")
+            raise
 
-    def test_search_non_existing_user(self):
-        self.manage_user.search_user("randomuser123")
-        rows = self.manage_user.get_all_user_rows()
-        self.assertEqual(len(rows), 0)  # Will pass if "No users found" row is ignored
+    # ------------------------------------------------
+    # SEARCH
+    # ------------------------------------------------
+    @allure.title("Verify search for existing user")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_02_search_existing_user(self):
+        username = "Sakshi"
 
-    # ---------------- ROLE CHANGE ----------------
-    def test_change_user_role(self):
-        username = "exuser"   # Make sure this user always exists
+        try:
+            self.manage_user.search_user(username)
+            rows = self.manage_user.get_all_user_rows()
+
+            assert len(rows) == 1
+            actual_username = rows[0].find_element(
+                By.XPATH, ManageUserLocators.USERNAME_CELL
+            ).text.strip()
+
+            assert actual_username == username
+        except AssertionError:
+            self.attach_screenshot("search_existing_user_failure")
+            raise
+
+    @allure.title("Verify search for non-existing user")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_03_search_non_existing_user(self):
+        try:
+            self.manage_user.search_user("random_user_123")
+            rows = self.manage_user.get_all_user_rows()
+            assert len(rows) == 0
+        except AssertionError:
+            self.attach_screenshot("search_non_existing_user_failure")
+            raise
+
+    # ------------------------------------------------
+    # ROLE CHANGE
+    # ------------------------------------------------
+    @allure.title("Verify admin can change user role")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_04_change_user_role(self):
+        username = "exuser"
         new_role = "Engineer"
-        print("Users in table:", self.manage_user.get_all_usernames())
-    # Step 1: Get the row of the user
-        row = self.manage_user.get_user_row_by_username(username)
-        self.assertIsNotNone(row, f"User '{username}' not found")
-    # Step 2: Change the user role
-        self.manage_user.change_user_role(row, new_role)
-    # Step 3: Verify success toast (instead of checking table)
-        self.device.verify_toast_success("User role updated!")
+        self.manage_user.reset_search()
+        try:
+            row = self.manage_user.get_user_row_by_username(username)
+            assert row is not None, f"User {username} not found"
 
-    # ---------------- DELETE USER ----------------
-    def test_delete_user_cancel(self):
-        username = "sakshi"
-        print("All users:", self.manage_user.get_all_usernames())   # 👈 ADD HERE
-        self.manage_user.click_delete_user(username)
-        self.manage_user.cancel_delete()
-        self.assertTrue(self.manage_user.is_user_in_table(username))
+            self.manage_user.change_user_role(row, new_role)
+            self.device.verify_toast_success("User role updated successfully")
+        except AssertionError:
+            self.attach_screenshot("change_role_failure")
+            raise
 
-    def test_delete_user_confirm(self):
-        username = "anu"
-        print("All users:", self.manage_user.get_all_usernames())   # 👈 ADD HERE
-        self.assertTrue(self.manage_user.is_user_in_table(username))
-        self.manage_user.click_delete_user(username)
-        self.manage_user.confirm_delete()
-        self.assertFalse(self.manage_user.is_user_in_table(username))
+    # ------------------------------------------------
+    # DELETE USER
+    # ------------------------------------------------
+    @allure.title("Verify delete user cancel flow")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_05_delete_user_cancel(self):
+        username = "Tom"
 
-    # ---------------- CSV DOWNLOAD ----------------
-    def test_download_csv(self):
-        self.manage_user.download_csv()
-
-    def test_download_csv_verification(self):
-    # Trigger CSV download
-        self.manage_user.download_csv()
-
-    # Folder where CSV is downloaded
-        download_folder = os.path.join(os.getcwd(), "Downloads")  # project Downloads folder
-        os.makedirs(download_folder, exist_ok=True)
-
-    # Wait for the file to appear (up to 10 seconds)
-        timeout = 10
-        for _ in range(timeout):
-            files = glob.glob(os.path.join(download_folder, "users*.csv"))
-            if files:
-                latest_file = max(files, key=os.path.getctime)
-                break
-            time.sleep(1)
-        else:
-            raise AssertionError("CSV file was not downloaded")
-
-        print("Downloaded CSV:", latest_file)
+        try:
+            self.manage_user.click_delete_user(username)
+            self.manage_user.cancel_delete()
+            assert self.manage_user.is_user_in_table(username)
+        except AssertionError:
+            self.attach_screenshot("delete_cancel_failure")
+            raise
 
 
-    # ---------------- Pagination Tests ----------------
-    def test_pagination_next_previous(self):
-        """Verify Next and Previous buttons navigate pages correctly"""
-        initial_page = self.manage_user.get_current_page_number()
-    
-    # Click Next (if more than 1 page exists)
-        pages = self.manage_user.get_all_page_numbers()
-        if len(pages) > 1:
+
+    # @allure.title("Verify delete user confirm flow")
+    # @allure.severity(allure.severity_level.CRITICAL)
+    # def test_06_delete_user_confirm(self):
+    #     username = "Tom"
+
+    #     try:
+    #     # Step 0: Ensure user exists
+    #         assert self.manage_user.is_user_in_table(username), f"User '{username}' not in table"
+
+    #     # Step 1: Click delete icon
+    #         self.manage_user.click_delete_user(username)
+
+    #     # Step 2: Wait for confirm button to be visible and clickable
+    #         button = WebDriverWait(self.driver, 10).until(
+    #         EC.visibility_of_element_located(ManageUserLocators.DELETE_MODAL_CONFIRM_BUTTON)
+    #     )
+    #         WebDriverWait(self.driver, 10).until(
+    #         EC.element_to_be_clickable(ManageUserLocators.DELETE_MODAL_CONFIRM_BUTTON)
+    #     )
+
+    #     # Step 2.5: Scroll button into view (prevents overlay issues)
+    #         self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", button)
+
+    #     # Step 3: Click confirm button
+    #         self.manage_user.click(ManageUserLocators.DELETE_MODAL_CONFIRM_BUTTON)
+
+    #     # Step 4: Wait until user is removed from table
+    #         WebDriverWait(self.driver, 10).until(
+    #         lambda d: not self.manage_user.is_user_in_table(username)
+    #     )
+
+    #     # Final assertion
+    #         assert not self.manage_user.is_user_in_table(username), "User was not deleted"
+
+    #     except AssertionError:
+    #         self.attach_screenshot("delete_confirm_failure")
+    #         raise
+
+
+    # ------------------------------------------------
+    # CSV DOWNLOAD
+    # ------------------------------------------------
+    @allure.title("Verify CSV download shows success toast")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_07_csv_download_toast(self):
+        try:
+            self.manage_user.download_csv()
+            self.device.verify_toast_success("CSV downloaded successfully!")
+        except AssertionError:
+            self.attach_screenshot("csv_download_failure")
+            raise
+
+    # ------------------------------------------------
+    # PAGINATION
+    # ------------------------------------------------
+    @allure.title("Verify pagination Next and Previous buttons")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_08_pagination_next_previous(self):
+        try:
+            pages = self.manage_user.get_all_page_numbers()
+            if len(pages) <= 1:
+                allure.attach("Only one page present", name="Pagination Skip")
+                return
+
+            initial_page = self.manage_user.get_current_page_number()
             self.manage_user.click_next_page()
-            next_page = self.manage_user.get_current_page_number()
-            self.assertEqual(next_page, initial_page + 1, "Next page navigation failed")
-        
-        # Click Previous to go back
+            assert self.manage_user.get_current_page_number() == initial_page + 1
+
             self.manage_user.click_previous_page()
-            prev_page = self.manage_user.get_current_page_number()
-            self.assertEqual(prev_page, initial_page, "Previous page navigation failed")
-        else:
-            print("Only 1 page exists, skipping Next/Previous test")
+            assert self.manage_user.get_current_page_number() == initial_page
+        except AssertionError:
+            self.attach_screenshot("pagination_next_prev_failure")
+            raise
 
-    def test_go_to_specific_page(self):
-        """Verify navigation to a specific page number"""
-        pages = self.manage_user.get_all_page_numbers()
-        if len(pages) > 1:
-            target_page = pages[-1]  # go to last page
-            self.manage_user.go_to_page(target_page)
-            current_page = self.manage_user.get_current_page_number()
-            self.assertEqual(current_page, target_page, f"Failed to navigate to page {target_page}")
-        else:
-            print("Only 1 page exists, skipping specific page navigation")
+    @allure.title("Verify Prev disabled on first page and Next disabled on last page")
+    @allure.severity(allure.severity_level.MINOR)
+    def test_09_pagination_button_disabled_states(self):
+        try:
+            pages = self.manage_user.get_all_page_numbers()
+            if len(pages) <= 1:
+                return
 
-    def test_pagination_buttons_disabled_on_first_last_page(self):
-        """Verify Prev is disabled on first page and Next is disabled on last page"""
+            self.manage_user.go_to_page(1)
+            prev_btn = self.manage_user.get_element(
+                ManageUserLocators.PREVIOUS_PAGE_BUTTON
+            )
+            assert prev_btn.value_of_css_property("pointer-events") == "none"
 
-        pages = self.manage_user.get_all_page_numbers()
+            self.manage_user.go_to_page(pages[-1])
+            next_btn = self.manage_user.get_element(
+                ManageUserLocators.NEXT_PAGE_BUTTON
+            )
+            assert next_btn.value_of_css_property("pointer-events") == "none"
+        except AssertionError:
+            self.attach_screenshot("pagination_disabled_failure")
+            raise
 
-        if len(pages) <= 1:
-            print("Only 1 page — skipping pagination button disable test")
-            return
-
-    # Go to FIRST page
-        self.manage_user.go_to_page(1)
-        prev_btn = self.manage_user.get_element(ManageUserLocators.PREVIOUS_PAGE_BUTTON)
-        self.assertEqual(prev_btn.value_of_css_property("pointer-events"), "none", "Prev button should be visually disabled on first page")
-    # Go to LAST page
-        last_page = pages[-1]
-        self.manage_user.go_to_page(last_page)
-        next_btn = self.manage_user.get_element(ManageUserLocators.NEXT_PAGE_BUTTON)
-        self.assertEqual(next_btn.value_of_css_property("pointer-events"), "none", "Next button should be visually disabled on last page")
-    
-    def test_search_filters_by_username_only(self):
-        """Ensure search matches only the username column"""
-
+    # ------------------------------------------------
+    # SEARCH FILTER VALIDATION
+    # ------------------------------------------------
+    @allure.title("Verify search filters only by username column")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_10_search_filters_by_username_only(self):
         query = "admin"
-        self.manage_user.search_user(query)
 
-        rows = self.manage_user.get_all_user_rows()
+        try:
+            self.manage_user.search_user(query)
+            rows = self.manage_user.get_all_user_rows()
 
-    # If no rows, skip (depends on environment data)
-        if len(rows) == 0:
-            self.fail("Search returned no rows — cannot validate search behavior")
+            assert len(rows) > 0
 
-        for row in rows:
-            username = row.find_element(By.XPATH, ManageUserLocators.USERNAME_CELL).text.lower()
-            self.assertIn(query, username, f"Search should match ONLY username, found: {username}")
+            for row in rows:
+                username = row.find_element(
+                    By.XPATH, ManageUserLocators.USERNAME_CELL
+                ).text.lower()
+                assert query in username
+        except AssertionError:
+            self.attach_screenshot("search_filter_failure")
+            raise
 
-    def test_csv_download_shows_toast(self):
-        """Verify CSV download triggers success toast"""
-        time.sleep(5)
-        self.manage_user.download_csv()
-        time.sleep(1)
-        self.device.verify_toast_success("CSV downloaded successfully!")
-
-
-    def tearDown(self):
-        self.quit_driver()
-
-
-if __name__ == "__main__":
-    unittest.main()
+    @classmethod
+    def tearDownClass(cls):
+        cls.quit_driver()

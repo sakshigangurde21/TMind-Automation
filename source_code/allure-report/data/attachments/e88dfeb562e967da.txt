@@ -1,2 +1,0 @@
-
-BROWSER VALIDATION MESSAGE (POLL INTERVAL): Please fill out this field.
