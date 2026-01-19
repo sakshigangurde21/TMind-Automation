@@ -131,6 +131,8 @@ class LoginPage(BasePage):
         super().__init__(driver)
         url = os.environ.get("BASE_URL")  # Load URL from .env
         self.driver.get(url)
+    
+        print("OPENING URL:", url)
         self.username = os.environ.get("USER_EMAIL")
         self.password = os.environ.get("PASSWORD")
 

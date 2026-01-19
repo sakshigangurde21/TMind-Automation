@@ -19,6 +19,8 @@ class Base(unittest.TestCase):
         os.makedirs(cls.screenshot_path, exist_ok=True)
 
         chrome_options = webdriver.ChromeOptions()
+        chrome_options.binary_location = "/usr/bin/chromium"
+        chrome_options.add_argument("--headless=new")
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)
         chrome_options.add_argument("--disable-gpu")
@@ -28,7 +30,7 @@ class Base(unittest.TestCase):
         chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
         cls.driver = webdriver.Chrome(options=chrome_options)
-        cls.driver.maximize_window()
+        # cls.driver.maximize_window()
         # cls.driver.get(os.environ.get("BASE_URL"))
         return cls.driver
 
@@ -40,8 +42,7 @@ class Base(unittest.TestCase):
                 test_name = self._testMethodName
                 screenshot_name = f"{test_name}{suffix}_{timestamp}.png"
                 screenshot_file = os.path.join(
-                    self.__class__.screenshot_path, screenshot_name
-                )
+                    self.__class__.screenshot_path, screenshot_name)
 
                 driver.save_screenshot(screenshot_file)
                 allure.attach.file(

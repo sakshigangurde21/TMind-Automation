@@ -328,7 +328,7 @@ class AssetsTests(Base):
             self.asset.click(
             AssetLocators.SUB_ASSET_SAVE_BTN
         )
-            # ✅ WAIT FOR TREE TO STABILIZE
+            # WAIT FOR TREE TO STABILIZE
             time.sleep(2)
 
         # Expand tree to reveal new child
@@ -351,53 +351,37 @@ class AssetsTests(Base):
             if depth < max_depth:
                 self.assertTrue(
                 self.asset.can_add_child(current_parent),
-                f"Add child must exist at depth {depth}"
-            )
+                f"Add child must exist at depth {depth}")
 
     # ---------- VERIFY DEPTH LIMIT ----------
         self.assertFalse(
         self.asset.can_add_child(current_parent),
-        "Add child must NOT exist after max depth"
-    )
-        
+        "Add child must NOT exist after max depth") 
     
     @allure.title("TC-17: Configure Signals – Add & Persist Signal")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_17_configure_signals_add_and_persist(self):
-
         asset_name = "Root_1_Child_Child_Child_Child"
-
     # Select asset
         self.asset.select_asset(asset_name)
-
     # Open Configure Signals
         self.asset.click(AssetLocators.CONFIGURE_SIGNALS_BTN)
         time.sleep(2)
-
     # Ensure Available Signals table is visible
-        self.assertTrue(
-        self.asset.is_visible(AssetLocators.AVAILABLE_SIGNALS_TABLE),
-        "Available signals table not visible"
-    )
-
+        self.assertTrue(self.asset.is_visible(AssetLocators.AVAILABLE_SIGNALS_TABLE), "Available signals table not visible")   
     # Add VOLTAGE signal
         self.asset.click(AssetLocators.ADD_SIGNAL_BTN)
         time.sleep(2)
-
     # Save changes
         self.asset.click(AssetLocators.SAVE_ALL_CHANGES_BTN)
-
     # Verify success toast
-        self.assertTrue(
-        self.asset.is_visible(AssetLocators.SAVE_SUCCESS_TOAST),
-        "Save success toast not shown"
-    )
-    
+        self.assertTrue(self.asset.is_visible(AssetLocators.SAVE_SUCCESS_TOAST), "Save success toast not shown")
+
+
 #     # ----------------- TC-20: Manage Connection – Open Map Dialog -----------------
 #     @allure.title("TC-20: Manage Connection – Open Map Dialog")
 #     @allure.severity(allure.severity_level.CRITICAL)
 #     def test_18_manage_connection_open_map_dialog(self):
-
 #         asset_name = "Root_1_Child_Child_Child_Child"
 #         time.sleep(2)
 #     # Select asset
