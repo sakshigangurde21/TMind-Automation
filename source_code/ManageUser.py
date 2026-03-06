@@ -169,9 +169,7 @@ class ManageUserTests(Base):
             self.attach_screenshot("csv_download_failure")
             raise
 
-    # ------------------------------------------------
     # PAGINATION
-    # ------------------------------------------------
     @allure.title("Verify pagination Next and Previous buttons")
     @allure.severity(allure.severity_level.NORMAL)
     def test_08_pagination_next_previous(self):
@@ -214,9 +212,6 @@ class ManageUserTests(Base):
             self.attach_screenshot("pagination_disabled_failure")
             raise
 
-    # ------------------------------------------------
-    # SEARCH FILTER VALIDATION
-    # ------------------------------------------------
     @allure.title("Verify search filters only by username column")
     @allure.severity(allure.severity_level.NORMAL)
     def test_10_search_filters_by_username_only(self):
@@ -229,9 +224,7 @@ class ManageUserTests(Base):
             assert len(rows) > 0
 
             for row in rows:
-                username = row.find_element(
-                    By.XPATH, ManageUserLocators.USERNAME_CELL
-                ).text.lower()
+                username = row.find_element(By.XPATH, ManageUserLocators.USERNAME_CELL).text.lower()
                 assert query in username
         except AssertionError:
             self.attach_screenshot("search_filter_failure")

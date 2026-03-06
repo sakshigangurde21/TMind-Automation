@@ -32,7 +32,7 @@ class AssetLocators:
     ADD_BTN = (By.XPATH, "//button[normalize-space()='Add']")
 
     CANCEL_BTN = (By.XPATH, "//button[normalize-space()='Cancel']")
-
+    
     # ---------- Dynamic Locators ----------
     def ASSET_NAME_NODE(name):
         return (By.XPATH, f"//span[contains(@class,'text-sm') and contains(normalize-space(.),'{name}')]")

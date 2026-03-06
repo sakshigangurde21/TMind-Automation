@@ -127,7 +127,7 @@ class LoginTests(Base):
             self.attach_screenshot("_failure")
             raise
 
-    # ---------------- CLEANUP ----------------
+     # ---------------- CLEANUP ----------------
     def tearDown(self):
         self.quit_driver()
 
